@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#33ffffff"
+    android:orientation="vertical">
+
+    <!--进度显示-->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingLeft="5dp"
+        android:paddingRight="5dp">
+
+        <TextView
+            android:id="@+id/tv_current_position"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="05:04" />
+
+        <ProgressBar
+            android:id="@+id/progress"
+            style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="3dp"
+            android:layout_marginRight="3dp"
+            android:layout_weight="1"
+            android:max="100"
+            android:progress="30" />
+
+        <TextView
+            android:id="@+id/tv_duration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="05:04" />
+    </LinearLayout>
+
+    播放控制按钮
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingBottom="10dp"
+        android:paddingTop="10dp">
+
+        <com.joanzapata.iconify.widget.IconTextView
+            android:id="@+id/btn_player_previous"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_centerVertical="true"
+            android:gravity="center"
+            android:text="{fa-step-backward 20sp}" />
+
+        <com.joanzapata.iconify.widget.IconTextView
+            android:id="@+id/btn_player_play"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:layout_toRightOf="@id/btn_player_previous"
+            android:gravity="center"
+            android:text="{fa-play-circle-o 40sp}" />
+
+        <com.joanzapata.iconify.widget.IconTextView
+            android:id="@+id/btn_player_next"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:layout_toRightOf="@id/btn_player_play"
+            android:gravity="center"
+            android:text="{fa-step-forward 20sp}" />
+
+        <com.joanzapata.iconify.widget.IconTextView
+            android:id="@+id/btn_player_list"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="30dp"
+            android:layout_toRightOf="@id/btn_player_next"
+            android:gravity="center"
+            android:text="{fa-list 20sp}" />
+
+        <com.joanzapata.iconify.widget.IconTextView
+            android:id="@+id/btn_player_auto_stop"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="20dp"
+            android:layout_toRightOf="@id/btn_player_list"
+            android:gravity="center"
+            android:text="{fa-clock-o 20sp}" />
+
+    </RelativeLayout>
+
+</LinearLayout>

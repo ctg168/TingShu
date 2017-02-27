@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#eeeeee"
+    android:paddingTop="0.5dp">
+
+    <com.joanzapata.iconify.widget.IconTextView
+        android:id="@+id/item_icon"
+        android:gravity="center|left"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:text="{fa-music}"/>
+
+    <TextView
+        android:id="@+id/tv_song_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="50dp"
+        android:background="#fff"
+        android:gravity="center|left"
+        android:layout_toRightOf="@id/item_icon"
+        android:text="第二回 史大郎夜走华阴县　鲁提辖拳打镇关西" />
+
+    <TextView
+        android:id="@+id/tv_duration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:textSize="10sp"
+        android:text="30:30"/>
+
+    <TextView
+        android:id="@+id/tv_current_position"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_toLeftOf="@id/tv_duration"
+        android:layout_marginRight="3dp"
+        android:textSize="10sp"
+        android:text="-"/>
+
+</RelativeLayout>

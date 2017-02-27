@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@android:color/white"
+    android:paddingBottom="3dp"
+    android:paddingLeft="2dp"
+    android:paddingRight="2dp"
+    android:paddingTop="3dp">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/colorListBKG"
+        android:gravity="center_vertical"
+        android:paddingBottom="15dp"
+        android:paddingLeft="8dp"
+        android:paddingRight="5dp"
+        android:paddingTop="15dp">
+
+        <com.joanzapata.iconify.widget.IconTextView
+            android:id="@+id/img"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_alignParentLeft="true"
+            android:layout_marginRight="8dp"
+            android:gravity="center"
+            android:src="@drawable/folder"
+            android:text="{fa-music 25sp #ffffff}" />
+
+        <TextView
+            android:id="@+id/folderPath"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_toRightOf="@id/img"
+            android:text="第二回 史大郎夜走华阴县　鲁提辖拳打镇关西"
+            android:textColor="@android:color/white" />
+
+
+        <TextView
+            android:id="@+id/tv_file_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="5dp"
+            android:text="100"
+            android:textColor="@android:color/white" />
+
+        <com.joanzapata.iconify.widget.IconTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="40dp"
+            android:text="{fa-heart 10sp}"
+            android:textAlignment="center"
+            android:textColor="@android:color/white" />
+
+    </RelativeLayout>
+
+</FrameLayout>
