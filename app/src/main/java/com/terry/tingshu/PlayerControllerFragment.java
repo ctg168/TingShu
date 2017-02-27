@@ -15,7 +15,7 @@ import com.terry.tingshu.core.FragmentBase;
  * Created by terry on 2017/2/25.
  */
 
-public class PlayerControllerFragment extends FragmentBase {
+public class PlayerControllerFragment extends FragmentBase implements View.OnClickListener {
 
     TextView tvCurrentPosition;
     TextView tvDuration;
@@ -46,6 +46,8 @@ public class PlayerControllerFragment extends FragmentBase {
         btnPlayerList = (IconTextView) view.findViewById(R.id.btn_player_list);
         btnPlayerAutostop = (IconTextView) view.findViewById(R.id.btn_player_auto_stop);
 
+        btnPlayerPlay.setOnClickListener(this);
+
         audioPlayService = mApp.getService();
 
         init();
@@ -58,6 +60,26 @@ public class PlayerControllerFragment extends FragmentBase {
         } else {
             btnPlayerPlay.setText("{fa-play-circle-o 40sp}");
         }
+
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()){
+            case R.id.btn_player_play:
+                break;
+            case R.id.btn_player_previous:
+                break;
+            case R.id.btn_player_next:
+                break;
+            case R.id.btn_player_list:
+                break;
+            case R.id.btn_player_auto_stop:
+                break;
+        }
+    }
+
+    private void showAutoStopDialog(){
 
     }
 }
