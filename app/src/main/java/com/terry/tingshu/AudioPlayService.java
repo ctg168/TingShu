@@ -98,7 +98,12 @@ public class AudioPlayService extends ServiceBase {
      * @param song 指定播放的歌曲.
      */
     public void playSong(Song song) {
+        Uri songUri = Uri.parse("file://" + song.getUri());
+        mApp.getSharedPreferences().edit().putString("last_song", songUri.toString()).apply();
+        playerPlay(songUri);
+    }
 
+    private void playerPlay(Uri songURI) {
         if (mPlayer != null && mPlayer.isPlaying()) {
             mPlayer.stop();
         }
@@ -108,16 +113,18 @@ public class AudioPlayService extends ServiceBase {
             @Override
             public void onPrepared(MediaPlayer mp) {
                 mPlayer.start();
+
             }
         });
 
         try {
-            //playingFile = filePath.toString();
-            mPlayer.setDataSource(this, Uri.parse("file://" + song.getUri()));
+
+            mPlayer.setDataSource(this, songURI);
             mPlayer.prepareAsync();
         } catch (IOException e) {
             e.printStackTrace();
         }
+
     }
 
     public void playerPause() {
@@ -127,7 +134,9 @@ public class AudioPlayService extends ServiceBase {
     }
 
     public void playerStart() {
-
+        if (mPlayer != null && mPlayer.isPlaying()) {
+            mPlayer.start();
+        }
     }
 
     public void playerPrevious() {

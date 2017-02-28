@@ -25,7 +25,7 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
     IconTextView btnPlayerPlay;
     IconTextView btnPlayerNext;
     IconTextView btnPlayerList;
-    IconTextView btnPlayerAutostop;
+    IconTextView btnPlayerAutoStop;
 
 
     AudioPlayService audioPlayService;
@@ -44,9 +44,14 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
         btnPlayerPlay = (IconTextView) view.findViewById(R.id.btn_player_play);
         btnPlayerNext = (IconTextView) view.findViewById(R.id.btn_player_next);
         btnPlayerList = (IconTextView) view.findViewById(R.id.btn_player_list);
-        btnPlayerAutostop = (IconTextView) view.findViewById(R.id.btn_player_auto_stop);
+        btnPlayerAutoStop = (IconTextView) view.findViewById(R.id.btn_player_auto_stop);
 
+        btnPlayerPrevious.setOnClickListener(this);
         btnPlayerPlay.setOnClickListener(this);
+        btnPlayerNext.setOnClickListener(this);
+        btnPlayerList.setOnClickListener(this);
+        btnPlayerAutoStop.setOnClickListener(this);
+
 
         audioPlayService = mApp.getService();
 
@@ -55,18 +60,21 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
     }
 
     private void init() {
-        if (audioPlayService.isPlaying()) {
-            btnPlayerPlay.setText("{fa-pause-circle-o 40sp}");
-        } else {
-            btnPlayerPlay.setText("{fa-play-circle-o 40sp}");
-        }
+
 
     }
 
     @Override
     public void onClick(View v) {
-        switch (v.getId()){
+        switch (v.getId()) {
             case R.id.btn_player_play:
+                if (audioPlayService.isPlaying()) {
+                    audioPlayService.playerPause();
+                    btnPlayerPlay.setText("{fa-play-circle-o 40sp}");
+                } else {
+                    audioPlayService.playerStart();
+                    btnPlayerPlay.setText("{fa-pause-circle-o 40sp}");
+                }
                 break;
             case R.id.btn_player_previous:
                 break;
@@ -79,7 +87,7 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
         }
     }
 
-    private void showAutoStopDialog(){
+    private void showAutoStopDialog() {
 
     }
 }
