@@ -11,7 +11,12 @@ import com.joanzapata.iconify.IconDrawable;
 import com.joanzapata.iconify.fonts.FontAwesomeIcons;
 import com.terry.tingshu.core.PlayerActivityBase;
 
+import java.io.IOException;
+
 public class MainActivity extends PlayerActivityBase {
+
+    private HttpServer httpServer= null;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,6 +32,21 @@ public class MainActivity extends PlayerActivityBase {
                 return false;
             }
         });
+
+        httpServer = new HttpServer(8009);
+        try {
+            httpServer.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if(httpServer!=null)
+            httpServer.stop();
     }
 
     @Override

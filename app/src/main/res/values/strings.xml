@@ -5,9 +5,11 @@
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
 
-
     <string name="player_play">{fa-play-circle-o 40sp}</string>
     <string name="player_pause">{fa-pause-circle-o 40sp}</string>
-
+    <string name="player_next">{fa-step-forward 20sp}</string>
+    <string name="player_previous">{fa-step-backward 20sp}</string>
+    <string name="player_list">{fa-list 20sp}</string>
+    <string name="player_auto_stop">{fa-clock-o 20sp}</string>
 
 </resources>

@@ -38,7 +38,7 @@
             android:text="05:04" />
     </LinearLayout>
 
-    播放控制按钮
+    <!--播放控制按钮-->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -52,7 +52,7 @@
             android:layout_height="40dp"
             android:layout_centerVertical="true"
             android:gravity="center"
-            android:text="{fa-step-backward 20sp}" />
+            android:text="@string/player_previous" />
 
         <com.joanzapata.iconify.widget.IconTextView
             android:id="@+id/btn_player_play"
@@ -62,7 +62,7 @@
             android:layout_marginLeft="10dp"
             android:layout_toRightOf="@id/btn_player_previous"
             android:gravity="center"
-            android:text="{fa-play-circle-o 40sp}" />
+            android:text="@string/player_play" />
 
         <com.joanzapata.iconify.widget.IconTextView
             android:id="@+id/btn_player_next"
@@ -72,7 +72,7 @@
             android:layout_marginLeft="10dp"
             android:layout_toRightOf="@id/btn_player_play"
             android:gravity="center"
-            android:text="{fa-step-forward 20sp}" />
+            android:text="@string/player_next" />
 
         <com.joanzapata.iconify.widget.IconTextView
             android:id="@+id/btn_player_list"
@@ -82,7 +82,7 @@
             android:layout_marginLeft="30dp"
             android:layout_toRightOf="@id/btn_player_next"
             android:gravity="center"
-            android:text="{fa-list 20sp}" />
+            android:text="@string/player_list" />
 
         <com.joanzapata.iconify.widget.IconTextView
             android:id="@+id/btn_player_auto_stop"
@@ -92,7 +92,7 @@
             android:layout_marginLeft="20dp"
             android:layout_toRightOf="@id/btn_player_list"
             android:gravity="center"
-            android:text="{fa-clock-o 20sp}" />
+            android:text="@string/player_auto_stop" />
 
     </RelativeLayout>
 
