@@ -140,7 +140,19 @@ public class AudioPlayService extends ServiceBase {
     }
 
     public void playerPrevious() {
+        if (mPlayer != null) {
+            if(songHelper.movePrevious()){
+                playSong(songHelper.get());
+            }
+        }
+    }
 
+    public void playerNext() {
+        if (mPlayer != null) {
+            if(songHelper.moveNext()){
+                playSong(songHelper.get());
+            }
+        }
     }
 
     public boolean isPlaying() {

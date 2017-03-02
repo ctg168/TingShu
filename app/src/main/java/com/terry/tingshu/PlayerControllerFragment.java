@@ -70,24 +70,34 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
             case R.id.btn_player_play:
                 if (audioPlayService.isPlaying()) {
                     audioPlayService.playerPause();
-                    btnPlayerPlay.setText("{fa-play-circle-o 40sp}");
+                    btnPlayerPlay.setText(getString(R.string.player_play));
                 } else {
                     audioPlayService.playerStart();
-                    btnPlayerPlay.setText("{fa-pause-circle-o 40sp}");
+                    btnPlayerPlay.setText(getString(R.string.player_pause));
                 }
                 break;
             case R.id.btn_player_previous:
+                audioPlayService.playerPrevious();
                 break;
             case R.id.btn_player_next:
+                audioPlayService.playerNext();
                 break;
             case R.id.btn_player_list:
+                showPlayList();
                 break;
             case R.id.btn_player_auto_stop:
+                showAutoStopDialog();
                 break;
         }
     }
 
     private void showAutoStopDialog() {
+        AutoStopDialog dialog = new AutoStopDialog();
+        dialog.show(getActivity().getFragmentManager(),"auto_stop_dialog");
+    }
+
+    private void showPlayList(){
 
     }
+
 }

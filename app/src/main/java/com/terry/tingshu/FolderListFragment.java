@@ -76,8 +76,10 @@ public class FolderListFragment extends FragmentBase {
         File file = new File(strPath);
         if (file.isDirectory()) {
             File[] subFile = file.listFiles();
-            for (File path : subFile) {
-                getFileList(path.getAbsolutePath());
+            if(subFile!=null) {
+                for (File path : subFile) {
+                    getFileList(path.getAbsolutePath());
+                }
             }
         } else {
             if (file.getName().endsWith(".mp3")) {
