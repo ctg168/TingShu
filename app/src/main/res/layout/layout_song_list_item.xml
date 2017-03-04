@@ -10,7 +10,7 @@
         android:gravity="center|left"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:text="{fa-music}"/>
+        android:text="@string/icon_music"/>
 
     <TextView
         android:id="@+id/tv_song_name"

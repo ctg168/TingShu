@@ -70,7 +70,7 @@ public class JetApplication extends Application {
 
     private void Init() {
         initImageLoader(this);
-        Toast.makeText(mContext, "Application Initialized...", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(mContext, "Application Initialized...", Toast.LENGTH_SHORT).show();
         Iconify.with(new FontAwesomeModule())
                 .with(new MaterialModule());
 

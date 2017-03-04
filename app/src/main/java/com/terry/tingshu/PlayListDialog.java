@@ -3,13 +3,14 @@ package com.terry.tingshu;
 import com.terry.tingshu.core.DialogFragmentBase;
 
 /**
- * Created by terry on 2017/2/27.
+ * Created by terry on 2017/3/4.
+ * TingShu
  */
 
-public class AutoStopDialog extends DialogFragmentBase {
+public class PlayListDialog extends DialogFragmentBase {
     @Override
     protected int getLayoutResource() {
-        return R.layout.dialog_auto_stop;
+        return 0;
     }
 
     @Override

@@ -8,6 +8,7 @@ import fi.iki.elonen.NanoHTTPD;
 
 /**
  * Created by terry on 2017/3/2.
+ * TingShu
  */
 
 public class HttpServer extends NanoHTTPD {
@@ -25,12 +26,12 @@ public class HttpServer extends NanoHTTPD {
 
         @Override
         public String getDescription() {
-            return null;
+            return description;
         }
 
         @Override
         public int getRequestStatus() {
-            return 0;
+            return requestStatus;
         }
     }
 

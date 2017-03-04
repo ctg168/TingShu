@@ -15,7 +15,7 @@ import com.terry.tingshu.helpers.SongHelper;
 
 import java.io.IOException;
 
-public class AudioPlayService extends ServiceBase {
+public class AudioPlayService extends ServiceBase implements MediaPlayer.OnPreparedListener, MediaPlayer.OnInfoListener {
 
     private SongHelper songHelper;
 
@@ -60,6 +60,11 @@ public class AudioPlayService extends ServiceBase {
         mApp.setService(this);
 
         initMediaPlayer();
+
+        String lastUrl = mApp.getSharedPreferences().getString("last_song", "");
+        if (lastUrl.length() > 0)
+            playerPlay(Uri.parse(lastUrl));
+
         return START_STICKY;
     }
 
@@ -68,6 +73,16 @@ public class AudioPlayService extends ServiceBase {
         System.out.println("AudioPlayService.onUnbind");
         return super.onUnbind(intent);
         //这里如果返回true,在本服务被重新绑定时，会调用onRebind()方法.
+    }
+
+    @Override
+    public void onPrepared(MediaPlayer mp) {
+
+    }
+
+    @Override
+    public boolean onInfo(MediaPlayer mp, int what, int extra) {
+        return false;
     }
 
     private void initMediaPlayer() {
@@ -85,6 +100,8 @@ public class AudioPlayService extends ServiceBase {
 
     private void init() {
         this.songHelper = new SongHelper(this.mApp);
+
+
 
     }
 
@@ -134,14 +151,14 @@ public class AudioPlayService extends ServiceBase {
     }
 
     public void playerStart() {
-        if (mPlayer != null && mPlayer.isPlaying()) {
+        if (mPlayer != null && !mPlayer.isPlaying()) {
             mPlayer.start();
         }
     }
 
     public void playerPrevious() {
         if (mPlayer != null) {
-            if(songHelper.movePrevious()){
+            if (songHelper.movePrevious()) {
                 playSong(songHelper.get());
             }
         }
@@ -149,7 +166,7 @@ public class AudioPlayService extends ServiceBase {
 
     public void playerNext() {
         if (mPlayer != null) {
-            if(songHelper.moveNext()){
+            if (songHelper.moveNext()) {
                 playSong(songHelper.get());
             }
         }
@@ -164,16 +181,17 @@ public class AudioPlayService extends ServiceBase {
     }
 
     public int getDuration() {
-        return mPlayer.getDuration();
+        if (mPlayer != null)
+            return mPlayer.getDuration();
+        return 0;
     }
+
 
     public class MyBinder extends Binder {
         public AudioPlayService getService() {
             return AudioPlayService.this;
         }
     }
-
-
 
 
 }

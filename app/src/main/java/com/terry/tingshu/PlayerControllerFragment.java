@@ -11,8 +11,12 @@ import android.widget.TextView;
 import com.joanzapata.iconify.widget.IconTextView;
 import com.terry.tingshu.core.FragmentBase;
 
+import java.util.Formatter;
+import java.util.Locale;
+
 /**
  * Created by terry on 2017/2/25.
+ * TingShu
  */
 
 public class PlayerControllerFragment extends FragmentBase implements View.OnClickListener {
@@ -30,6 +34,9 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
 
     AudioPlayService audioPlayService;
 
+
+    StringBuilder mFormatBuilder;
+    Formatter mFormatter;
 
     @Nullable
     @Override
@@ -55,12 +62,49 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
 
         audioPlayService = mApp.getService();
 
+        mFormatBuilder = new StringBuilder();
+
+        mFormatBuilder.setLength(0);
+
+        mFormatter = new Formatter(mFormatBuilder, Locale.getDefault());
+
         init();
         return view;
     }
 
     private void init() {
+        if (audioPlayService.isPlaying()) {
+            btnPlayerPlay.setText(getString(R.string.player_pause));
+        } else {
+            btnPlayerPlay.setText(getString(R.string.player_play));
+        }
 
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (audioPlayService.isPlaying()) {
+                    tvDuration.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            tvDuration.setText(stringForTime(audioPlayService.getDuration()));
+                        }
+                    });
+
+                    try {
+                        Thread.sleep(1000);
+                        tvCurrentPosition.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                tvCurrentPosition.setText(stringForTime(audioPlayService.getCurrentPos()));
+                            }
+                        });
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }).start();
 
     }
 
@@ -93,11 +137,25 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
 
     private void showAutoStopDialog() {
         AutoStopDialog dialog = new AutoStopDialog();
-        dialog.show(getActivity().getFragmentManager(),"auto_stop_dialog");
+        dialog.show(getActivity().getFragmentManager(), "auto_stop_dialog");
     }
 
-    private void showPlayList(){
+    private void showPlayList() {
 
+    }
+
+    private String stringForTime(int timeMs) {
+        int totalSeconds = timeMs / 1000;
+
+        int seconds = totalSeconds % 60;
+        int minutes = (totalSeconds / 60) % 60;
+        int hours = totalSeconds / 3600;
+
+        if (hours > 0) {
+            return mFormatter.format("%d:%02d:%02d", hours, minutes, seconds).toString();
+        } else {
+            return mFormatter.format("%02d:%02d", minutes, seconds).toString();
+        }
     }
 
 }
