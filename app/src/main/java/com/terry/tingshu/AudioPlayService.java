@@ -1,5 +1,7 @@
 package com.terry.tingshu;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -65,12 +67,8 @@ public class AudioPlayService extends ServiceBase implements MediaPlayer.OnPrepa
 
         initMediaPlayer();
 
-        String lastUrl = mApp.getSharedPreferences().getString(KEY_LAST_SONG_URL, "");
-        int lastPos = mApp.getSharedPreferences().getInt(KEY_LAST_SONG_POS, 0);
-        if (lastUrl.length() > 0)
-            playerPlay(Uri.parse(lastUrl));
-        if (lastPos > 0)
-            mPlayer.seekTo(lastPos);
+        resumePlayer();
+
         return START_STICKY;
     }
 
@@ -102,13 +100,27 @@ public class AudioPlayService extends ServiceBase implements MediaPlayer.OnPrepa
         //PARTIAL_WAKE_LOCK:保持CPU 运转，屏幕和键盘灯有可能是关闭的。
         mPlayer.setWakeMode(this, PowerManager.PARTIAL_WAKE_LOCK);
         mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+
+            }
+        });
     }
 
     private void init() {
         this.songHelper = new SongHelper(this.mApp);
-
-
     }
+
+    private void resumePlayer() {
+        String lastUrl = mApp.getSharedPreferences().getString(KEY_LAST_SONG_URL, "");
+        int lastPos = mApp.getSharedPreferences().getInt(KEY_LAST_SONG_POS, 0);
+        if (lastUrl.length() > 0)
+            playerPlay(Uri.parse(lastUrl));
+        if (lastPos > 0)
+            mPlayer.seekTo(lastPos);
+    }
+
 
     public SongHelper getSongHelper() {
         return this.songHelper;
@@ -162,6 +174,12 @@ public class AudioPlayService extends ServiceBase implements MediaPlayer.OnPrepa
         }
     }
 
+    public void playerStop() {
+        if (mPlayer != null) {
+            mPlayer.stop();
+        }
+    }
+
     public void playerPrevious() {
         if (mPlayer != null) {
             if (songHelper.movePrevious()) {
@@ -199,5 +217,28 @@ public class AudioPlayService extends ServiceBase implements MediaPlayer.OnPrepa
         }
     }
 
+    class PlayerServiceReceiver extends BroadcastReceiver {
 
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            int control = intent.getIntExtra("control", -1);
+            switch (control) {
+                case Const.PLAYER_PLAY:
+                    playerStart();
+                    break;
+                case Const.PLAYER_PAUSE:
+                    playerPause();
+                    break;
+                case Const.PLAYER_STOP:
+                    playerStop();
+                    break;
+                case Const.PLAYER_PREVIOUS:
+                    playerPrevious();
+                    break;
+                case Const.PLAYER_NEXT:
+                    playerNext();
+                    break;
+            }
+        }
+    }
 }

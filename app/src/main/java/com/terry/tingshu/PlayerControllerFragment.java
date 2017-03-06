@@ -1,5 +1,8 @@
 package com.terry.tingshu;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
@@ -59,13 +62,9 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
         btnPlayerList.setOnClickListener(this);
         btnPlayerAutoStop.setOnClickListener(this);
 
-
         audioPlayService = mApp.getService();
 
         mFormatBuilder = new StringBuilder();
-
-        mFormatBuilder.setLength(0);
-
         mFormatter = new Formatter(mFormatBuilder, Locale.getDefault());
 
         init();
@@ -88,6 +87,7 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
                         @Override
                         public void run() {
                             tvDuration.setText(stringForTime(audioPlayService.getDuration()));
+                            progressBar.setMax(audioPlayService.getDuration());
                         }
                     });
 
@@ -97,6 +97,7 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
                             @Override
                             public void run() {
                                 tvCurrentPosition.setText(stringForTime(audioPlayService.getCurrentPos()));
+                                progressBar.setProgress(audioPlayService.getCurrentPos());
                             }
                         });
                     } catch (InterruptedException e) {
@@ -151,11 +152,29 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
         int minutes = (totalSeconds / 60) % 60;
         int hours = totalSeconds / 3600;
 
+        mFormatBuilder.setLength(0);
+
         if (hours > 0) {
             return mFormatter.format("%d:%02d:%02d", hours, minutes, seconds).toString();
         } else {
             return mFormatter.format("%02d:%02d", minutes, seconds).toString();
         }
     }
+
+
+    /**
+     * 接收后台Service发出的广播
+     */
+    class MusicBoxReceiver extends BroadcastReceiver{
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            int current = intent.getIntExtra("",1);
+
+
+        }
+    }
+
 
 }
