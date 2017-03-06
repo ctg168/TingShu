@@ -17,6 +17,10 @@ import java.io.IOException;
 
 public class AudioPlayService extends ServiceBase implements MediaPlayer.OnPreparedListener, MediaPlayer.OnInfoListener {
 
+    private static String KEY_LAST_SONG_URL = "last_song";
+    private static String KEY_LAST_SONG_POS = "last_song_position";
+
+
     private SongHelper songHelper;
 
     private MusicPlayer mPlayer;
@@ -61,10 +65,12 @@ public class AudioPlayService extends ServiceBase implements MediaPlayer.OnPrepa
 
         initMediaPlayer();
 
-        String lastUrl = mApp.getSharedPreferences().getString("last_song", "");
+        String lastUrl = mApp.getSharedPreferences().getString(KEY_LAST_SONG_URL, "");
+        int lastPos = mApp.getSharedPreferences().getInt(KEY_LAST_SONG_POS, 0);
         if (lastUrl.length() > 0)
             playerPlay(Uri.parse(lastUrl));
-
+        if (lastPos > 0)
+            mPlayer.seekTo(lastPos);
         return START_STICKY;
     }
 
@@ -102,7 +108,6 @@ public class AudioPlayService extends ServiceBase implements MediaPlayer.OnPrepa
         this.songHelper = new SongHelper(this.mApp);
 
 
-
     }
 
     public SongHelper getSongHelper() {
@@ -116,7 +121,7 @@ public class AudioPlayService extends ServiceBase implements MediaPlayer.OnPrepa
      */
     public void playSong(Song song) {
         Uri songUri = Uri.parse("file://" + song.getUri());
-        mApp.getSharedPreferences().edit().putString("last_song", songUri.toString()).apply();
+        mApp.getSharedPreferences().edit().putString(KEY_LAST_SONG_URL, songUri.toString()).apply();
         playerPlay(songUri);
     }
 
@@ -147,6 +152,7 @@ public class AudioPlayService extends ServiceBase implements MediaPlayer.OnPrepa
     public void playerPause() {
         if (mPlayer != null && mPlayer.isPlaying()) {
             mPlayer.pause();
+            mApp.getSharedPreferences().edit().putInt(KEY_LAST_SONG_POS, mPlayer.getCurrentPosition()).apply();
         }
     }
 
