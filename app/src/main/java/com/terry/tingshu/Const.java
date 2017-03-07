@@ -25,6 +25,10 @@ class Const {
     static final int PLAYER_NEXT = 0x124;
 
 
-    public static final String ACTION_MUSIC_CURRENT = "ACTION_MUSIC_CURRENT";
+    static final String ACTION_MUSIC_CURRENT = "ACTION_MUSIC_CURRENT";
+
+    static final String KEY_LAST_SONG_URL = "last_song";
+    static final String KEY_LAST_SONG_POS = "last_song_position";
+
 
 }

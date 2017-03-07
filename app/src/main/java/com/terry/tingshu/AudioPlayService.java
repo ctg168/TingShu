@@ -19,11 +19,13 @@ import com.terry.tingshu.helpers.SongHelper;
 
 import java.io.IOException;
 
+import static com.terry.tingshu.Const.KEY_LAST_SONG_POS;
+import static com.terry.tingshu.Const.KEY_LAST_SONG_URL;
+
 public class AudioPlayService extends ServiceBase implements MediaPlayer.OnPreparedListener, MediaPlayer.OnInfoListener {
 
 
-    private static String KEY_LAST_SONG_URL = "last_song";
-    private static String KEY_LAST_SONG_POS = "last_song_position";
+    //LocalBroadCastManager
 
 
     private SongHelper songHelper;
@@ -117,7 +119,7 @@ public class AudioPlayService extends ServiceBase implements MediaPlayer.OnPrepa
 
     private void resumePlayer() {
         String lastUrl = mApp.getSharedPreferences().getString(KEY_LAST_SONG_URL, "");
-        int lastPos = mApp.getSharedPreferences().getInt(KEY_LAST_SONG_POS, 0);
+        int lastPos = mApp.getSharedPreferences().getInt( KEY_LAST_SONG_POS, 0);
         if (lastUrl.length() > 0)
             playerPlay(Uri.parse(lastUrl));
         if (lastPos > 0)
@@ -233,7 +235,7 @@ public class AudioPlayService extends ServiceBase implements MediaPlayer.OnPrepa
     };
 
 
-    class PlayerServiceReceiver extends BroadcastReceiver {
+    class PlayerServiceReceiver extends  BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
