@@ -7,7 +7,9 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.os.PowerManager;
 
 import com.terry.tingshu.core.JetApplication;
@@ -18,6 +20,7 @@ import com.terry.tingshu.helpers.SongHelper;
 import java.io.IOException;
 
 public class AudioPlayService extends ServiceBase implements MediaPlayer.OnPreparedListener, MediaPlayer.OnInfoListener {
+
 
     private static String KEY_LAST_SONG_URL = "last_song";
     private static String KEY_LAST_SONG_POS = "last_song_position";
@@ -216,6 +219,19 @@ public class AudioPlayService extends ServiceBase implements MediaPlayer.OnPrepa
             return AudioPlayService.this;
         }
     }
+
+    private Handler handler = new Handler() {
+        public void handleMessage(Message msg) {
+            if (msg.what == 1 && mPlayer != null) {
+                Intent intent = new Intent();
+                intent.setAction(Const.ACTION_MUSIC_CURRENT);
+                intent.putExtra("currentPosition", mPlayer.getCurrentPosition());
+                sendBroadcast(intent);
+                handler.sendEmptyMessageDelayed(1, 1000);
+            }
+        }
+    };
+
 
     class PlayerServiceReceiver extends BroadcastReceiver {
 
