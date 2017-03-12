@@ -3,8 +3,10 @@ package com.terry.tingshu;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,13 +19,9 @@ import com.terry.tingshu.core.FragmentBase;
 import java.util.Formatter;
 import java.util.Locale;
 
-/**
- * Created by terry on 2017/2/25.
- * TingShu
- */
-
 public class PlayerControllerFragment extends FragmentBase implements View.OnClickListener {
 
+    //region controls define
     TextView tvCurrentPosition;
     TextView tvDuration;
     ProgressBar progressBar;
@@ -33,19 +31,22 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
     IconTextView btnPlayerNext;
     IconTextView btnPlayerList;
     IconTextView btnPlayerAutoStop;
-
+    //endregion
 
     AudioPlayService audioPlayService;
-
+    MusicPlayer musicPlayer;
 
     StringBuilder mFormatBuilder;
     Formatter mFormatter;
+
+    LocalBroadcastManager localBroadcastManager;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_media_controller, container, false);
 
+        //region controls init
         tvCurrentPosition = (TextView) view.findViewById(R.id.tv_current_position);
         tvDuration = (TextView) view.findViewById(R.id.tv_duration);
         progressBar = (ProgressBar) view.findViewById(R.id.progress);
@@ -62,7 +63,11 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
         btnPlayerList.setOnClickListener(this);
         btnPlayerAutoStop.setOnClickListener(this);
 
+
+        //endregion
+
         audioPlayService = mApp.getService();
+        musicPlayer = audioPlayService.getMusicPlayer();
 
         mFormatBuilder = new StringBuilder();
         mFormatter = new Formatter(mFormatBuilder, Locale.getDefault());
@@ -72,60 +77,85 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
     }
 
     private void init() {
-        if (audioPlayService.isPlaying()) {
+        initMsgBroadCast();
+    }
+
+    private void initMsgBroadCast() {
+        localBroadcastManager = LocalBroadcastManager.getInstance(getActivity());
+        localBroadcastManager.registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (intent.getAction() != null && intent.getAction().equals(SystemConst.ACTION_MUSIC_SEVICE_INFO)) {
+                    int control = intent.getIntExtra(SystemConst.EXTRA_KEY_PLAYER_INFO, -1);
+                    if (control >= 0) {
+
+                        getActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                               // showPlayInfo();
+                            }
+                        });
+
+                        // ============== 广播订阅 ===============
+                        //播放服务发布的信息有：
+                        //当前播放的歌曲，位置.
+                        //当前的播放状态：播放，停止，暂停
+//                        switch (control) {
+//                            case SystemConst.INFO_PLAYER_PLAYING:
+//
+//                                break;
+//                            case SystemConst.INFO_PLAYER_PAUSE:
+//                                showPlayInfo();
+//                                break;
+//                        }
+                    }
+                }
+
+            }
+        }, new IntentFilter(SystemConst.ACTION_MUSIC_SEVICE_INFO));
+    }
+
+    private void showPlayInfo() {
+        int duration = audioPlayService.getMusicPlayer().getDuration();
+        tvDuration.setText(stringForTime(duration));
+        progressBar.setMax(audioPlayService.getMusicPlayer().getDuration());
+        if (audioPlayService.getMusicPlayer().isPlaying()) {
             btnPlayerPlay.setText(getString(R.string.player_pause));
+            while (audioPlayService.getMusicPlayer().isPlaying()) {
+                try {
+                    int currentPos = audioPlayService.getMusicPlayer().getCurrentPosition();
+                    tvCurrentPosition.setText(stringForTime(currentPos));
+                    progressBar.setProgress(currentPos);
+
+                    Thread.sleep(1000);
+
+                    System.out.println("PlayerControllerFragment.showPlayInfo: " + currentPos + "/" + duration);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         } else {
             btnPlayerPlay.setText(getString(R.string.player_play));
         }
-
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (audioPlayService.isPlaying()) {
-                    tvDuration.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            tvDuration.setText(stringForTime(audioPlayService.getDuration()));
-                            progressBar.setMax(audioPlayService.getDuration());
-                        }
-                    });
-
-                    try {
-                        Thread.sleep(1000);
-                        tvCurrentPosition.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                tvCurrentPosition.setText(stringForTime(audioPlayService.getCurrentPos()));
-                                progressBar.setProgress(audioPlayService.getCurrentPos());
-                            }
-                        });
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }).start();
-
     }
 
     @Override
     public void onClick(View v) {
+
+        Intent intent = new Intent(SystemConst.ACTION_PLAYER_CONTROLL);
         switch (v.getId()) {
             case R.id.btn_player_play:
-                if (audioPlayService.isPlaying()) {
-                    audioPlayService.playerPause();
-                    btnPlayerPlay.setText(getString(R.string.player_play));
+                if (audioPlayService.getMusicPlayer().isPlaying()) {
+                    intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROLL, SystemConst.PLAYER_PAUSE);
                 } else {
-                    audioPlayService.playerStart();
-                    btnPlayerPlay.setText(getString(R.string.player_pause));
+                    intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROLL, SystemConst.PLAYER_PLAY);
                 }
                 break;
             case R.id.btn_player_previous:
-                audioPlayService.playerPrevious();
+                intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROLL, SystemConst.PLAYER_PREVIOUS);
                 break;
             case R.id.btn_player_next:
-                audioPlayService.playerNext();
+                intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROLL, SystemConst.PLAYER_NEXT);
                 break;
             case R.id.btn_player_list:
                 showPlayList();
@@ -134,6 +164,7 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
                 showAutoStopDialog();
                 break;
         }
+        localBroadcastManager.sendBroadcastSync(intent);
     }
 
     private void showAutoStopDialog() {
@@ -158,21 +189,6 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
             return mFormatter.format("%d:%02d:%02d", hours, minutes, seconds).toString();
         } else {
             return mFormatter.format("%02d:%02d", minutes, seconds).toString();
-        }
-    }
-
-
-    /**
-     * 接收后台Service发出的广播
-     */
-    class MusicBoxReceiver extends BroadcastReceiver{
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-
-            int current = intent.getIntExtra("",1);
-
-
         }
     }
 

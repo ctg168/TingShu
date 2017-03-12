@@ -4,9 +4,7 @@
     android:id="@+id/activity_play"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-
-    android:orientation="vertical"
-    tools:context="com.terry.tingshu.SongListActivity">
+    android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"

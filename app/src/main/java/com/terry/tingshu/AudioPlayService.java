@@ -3,43 +3,36 @@ package com.terry.tingshu;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
 import android.os.PowerManager;
+import android.support.v4.content.LocalBroadcastManager;
 
 import com.terry.tingshu.core.JetApplication;
 import com.terry.tingshu.core.ServiceBase;
 import com.terry.tingshu.entity.Song;
 import com.terry.tingshu.helpers.SongHelper;
 
+import java.io.File;
 import java.io.IOException;
 
-import static com.terry.tingshu.Const.KEY_LAST_SONG_POS;
-import static com.terry.tingshu.Const.KEY_LAST_SONG_URL;
-
-public class AudioPlayService extends ServiceBase implements MediaPlayer.OnPreparedListener, MediaPlayer.OnInfoListener {
-
-
-    //LocalBroadCastManager
-
+public class AudioPlayService extends ServiceBase {
+    private JetApplication mApp;
 
     private SongHelper songHelper;
 
     private MusicPlayer mPlayer;
 
-    private JetApplication mApp;
-
     private MyBinder mBinder = new MyBinder();
 
-    public AudioPlayService() {
-        init();
-        System.out.println("AudioPlayService.AudioPlayService");
+    private LocalBroadcastManager localBroadcastManager;
 
+    public AudioPlayService() {
+        //region heart beat
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -54,7 +47,27 @@ public class AudioPlayService extends ServiceBase implements MediaPlayer.OnPrepa
                 }
             }
         }).start();
+        //endregion
 
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        initMsgBroadCast();
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+
+        mApp = (JetApplication) getApplicationContext();
+        mApp.setService(this);
+        this.songHelper = new SongHelper(this.mApp);
+
+        initMediaPlayer();
+
+
+        return START_STICKY;
     }
 
     @Override
@@ -64,34 +77,10 @@ public class AudioPlayService extends ServiceBase implements MediaPlayer.OnPrepa
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        System.out.println("AudioPlayService.onStartCommand");
-
-        mApp = (JetApplication) getApplicationContext();
-        mApp.setService(this);
-
-        initMediaPlayer();
-
-        resumePlayer();
-
-        return START_STICKY;
-    }
-
-    @Override
     public boolean onUnbind(Intent intent) {
         System.out.println("AudioPlayService.onUnbind");
         return super.onUnbind(intent);
         //这里如果返回true,在本服务被重新绑定时，会调用onRebind()方法.
-    }
-
-    @Override
-    public void onPrepared(MediaPlayer mp) {
-
-    }
-
-    @Override
-    public boolean onInfo(MediaPlayer mp, int what, int extra) {
-        return false;
     }
 
     private void initMediaPlayer() {
@@ -105,30 +94,74 @@ public class AudioPlayService extends ServiceBase implements MediaPlayer.OnPrepa
         //PARTIAL_WAKE_LOCK:保持CPU 运转，屏幕和键盘灯有可能是关闭的。
         mPlayer.setWakeMode(this, PowerManager.PARTIAL_WAKE_LOCK);
         mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+        mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
-            public void onCompletion(MediaPlayer mp) {
+            public void onPrepared(MediaPlayer mp) {
+                mPlayer.start();
+                Intent intent = new Intent(SystemConst.ACTION_MUSIC_SEVICE_INFO);
+                intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_INFO, SystemConst.INFO_PLAYER_PLAYING);
+                localBroadcastManager.sendBroadcast(intent);
 
             }
         });
+
     }
 
-    private void init() {
-        this.songHelper = new SongHelper(this.mApp);
+    private void initMsgBroadCast() {
+        localBroadcastManager = LocalBroadcastManager.getInstance(AudioPlayService.this);
+        localBroadcastManager.registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (intent.getAction() != null && intent.getAction().equals(SystemConst.ACTION_PLAYER_CONTROLL)) {
+                    int control = intent.getIntExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROLL, -1);
+                    // ============== 广播订阅 ===============
+                    //播放服务接收的广播信息有：
+                    //当前的播放状态：播放，暂停，上一首，下一首
+                    switch (control) {
+                        case SystemConst.PLAYER_PLAY:
+                            playerStart();
+                            System.out.println("AudioPlayService.onReceive:PLAYER_PLAY");
+                            break;
+                        case SystemConst.PLAYER_PAUSE:
+                            playerPause();
+                            System.out.println("AudioPlayService.onReceive:PLAYER_PAUSE");
+                            break;
+                        case SystemConst.PLAYER_PREVIOUS:
+                            playerPrevious();
+                            System.out.println("AudioPlayService.onReceive:PLAYER_PREVIOUS");
+                            break;
+                        case SystemConst.PLAYER_NEXT:
+                            playerNext();
+                            System.out.println("AudioPlayService.onReceive:PLAYER_NEXT");
+                            break;
+                    }
+                }
+            }
+        }, new IntentFilter(SystemConst.ACTION_PLAYER_CONTROLL));
+
     }
 
-    private void resumePlayer() {
-        String lastUrl = mApp.getSharedPreferences().getString(KEY_LAST_SONG_URL, "");
-        int lastPos = mApp.getSharedPreferences().getInt( KEY_LAST_SONG_POS, 0);
-        if (lastUrl.length() > 0)
-            playerPlay(Uri.parse(lastUrl));
-        if (lastPos > 0)
-            mPlayer.seekTo(lastPos);
+    private void initProgressBroadcast() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(500);
+                    if (mPlayer.isPlaying()) {
+                        Intent intent = new Intent(SystemConst.ACTION_MUSIC_SEVICE_INFO);
+                        intent.putExtra(SystemConst.EXTRA_KEY_CURRENT_POSITION, mPlayer.getCurrentPosition());
+                        localBroadcastManager.sendBroadcast(intent);
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 
-
-    public SongHelper getSongHelper() {
-        return this.songHelper;
+    private void initSongHelper(String songUrl) {
+        File songfile = new File(songUrl);
+        this.songHelper.loadPlayList(songfile.getParent());
     }
 
     /**
@@ -137,55 +170,45 @@ public class AudioPlayService extends ServiceBase implements MediaPlayer.OnPrepa
      * @param song 指定播放的歌曲.
      */
     public void playSong(Song song) {
+        initSongHelper(song.getUri());
+
         Uri songUri = Uri.parse("file://" + song.getUri());
-        mApp.getSharedPreferences().edit().putString(KEY_LAST_SONG_URL, songUri.toString()).apply();
+
         playerPlay(songUri);
     }
 
     private void playerPlay(Uri songURI) {
-        if (mPlayer != null && mPlayer.isPlaying()) {
-            mPlayer.stop();
+        if (mPlayer != null) {
+//            mPlayer.stop();
+            mPlayer.reset();
         }
 
-        mPlayer = new MusicPlayer();
-        mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-            @Override
-            public void onPrepared(MediaPlayer mp) {
-                mPlayer.start();
-
-            }
-        });
-
         try {
-
             mPlayer.setDataSource(this, songURI);
             mPlayer.prepareAsync();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
-    public void playerPause() {
+    private void playerPause() {
         if (mPlayer != null && mPlayer.isPlaying()) {
             mPlayer.pause();
-            mApp.getSharedPreferences().edit().putInt(KEY_LAST_SONG_POS, mPlayer.getCurrentPosition()).apply();
+            Intent intent = new Intent(SystemConst.ACTION_MUSIC_SEVICE_INFO);
+            intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_INFO, SystemConst.INFO_PLAYER_PAUSE);
+            localBroadcastManager.sendBroadcast(intent);
+
+            mApp.getSharedPreferences().edit().putString(SystemConst.KEY_LAST_SONG_URL, songHelper.get().getUri()).apply();
+            mApp.getSharedPreferences().edit().putInt(SystemConst.KEY_LAST_SONG_POS, mPlayer.getCurrentPosition()).apply();
+
         }
     }
 
-    public void playerStart() {
-        if (mPlayer != null && !mPlayer.isPlaying()) {
-            mPlayer.start();
-        }
+    private void playerStart() {
+        resumePlay();
     }
 
-    public void playerStop() {
-        if (mPlayer != null) {
-            mPlayer.stop();
-        }
-    }
-
-    public void playerPrevious() {
+    private void playerPrevious() {
         if (mPlayer != null) {
             if (songHelper.movePrevious()) {
                 playSong(songHelper.get());
@@ -193,7 +216,7 @@ public class AudioPlayService extends ServiceBase implements MediaPlayer.OnPrepa
         }
     }
 
-    public void playerNext() {
+    private void playerNext() {
         if (mPlayer != null) {
             if (songHelper.moveNext()) {
                 playSong(songHelper.get());
@@ -201,62 +224,27 @@ public class AudioPlayService extends ServiceBase implements MediaPlayer.OnPrepa
         }
     }
 
-    public boolean isPlaying() {
-        return mPlayer.isPlaying();
+    private void resumePlay() {
+        String lastUrl = mApp.getSharedPreferences().getString(SystemConst.KEY_LAST_SONG_URL, "");
+        int lastPos = mApp.getSharedPreferences().getInt(SystemConst.KEY_LAST_SONG_POS, 0);
+        mApp.getSharedPreferences().edit().putString(SystemConst.KEY_LAST_SONG_URL, lastUrl.toString()).apply();
+        if (lastUrl.length() > 0)
+            playerPlay(Uri.parse(lastUrl));
+        if (lastPos > 0)
+            mPlayer.seekTo(lastPos);
     }
 
-    public int getCurrentPos() {
-        return mPlayer.getCurrentPosition();
+    public SongHelper getSongHelper() {
+        return songHelper;
     }
 
-    public int getDuration() {
-        if (mPlayer != null)
-            return mPlayer.getDuration();
-        return 0;
+    public MusicPlayer getMusicPlayer() {
+        return mPlayer;
     }
-
 
     public class MyBinder extends Binder {
         public AudioPlayService getService() {
             return AudioPlayService.this;
-        }
-    }
-
-    private Handler handler = new Handler() {
-        public void handleMessage(Message msg) {
-            if (msg.what == 1 && mPlayer != null) {
-                Intent intent = new Intent();
-                intent.setAction(Const.ACTION_MUSIC_CURRENT);
-                intent.putExtra("currentPosition", mPlayer.getCurrentPosition());
-                sendBroadcast(intent);
-                handler.sendEmptyMessageDelayed(1, 1000);
-            }
-        }
-    };
-
-
-    class PlayerServiceReceiver extends  BroadcastReceiver {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            int control = intent.getIntExtra("control", -1);
-            switch (control) {
-                case Const.PLAYER_PLAY:
-                    playerStart();
-                    break;
-                case Const.PLAYER_PAUSE:
-                    playerPause();
-                    break;
-                case Const.PLAYER_STOP:
-                    playerStop();
-                    break;
-                case Const.PLAYER_PREVIOUS:
-                    playerPrevious();
-                    break;
-                case Const.PLAYER_NEXT:
-                    playerNext();
-                    break;
-            }
         }
     }
 }
