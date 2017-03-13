@@ -33,4 +33,5 @@ dependencies {
     compile 'com.joanzapata.iconify:android-iconify-fontawesome:2.2.2'
     compile 'com.joanzapata.iconify:android-iconify-material:2.2.2'
     compile 'org.nanohttpd:nanohttpd:2.3.1'
+    compile 'com.android.support:appcompat-v7:25.1.0'
 }

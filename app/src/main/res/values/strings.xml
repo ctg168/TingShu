@@ -4,6 +4,7 @@
     <string name="title_activity_splash_screen">SplashScreenActivity</string>
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="dummy_title">第二回 史大郎夜走华阴县　鲁提辖拳打镇关西</string>
 
     <string name="icon_music">{fa-music 40sp}</string>
     <string name="player_play">{fa-play-circle-o 40sp}</string>

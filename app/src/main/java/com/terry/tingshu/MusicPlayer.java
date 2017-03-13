@@ -1,6 +1,7 @@
 package com.terry.tingshu;
 
 import android.media.MediaPlayer;
+import android.widget.MediaController;
 
 /**
  * Created by terry on 2017/1/11.
@@ -19,5 +20,4 @@ import android.media.MediaPlayer;
  */
 
 public class MusicPlayer extends MediaPlayer {
-
 }

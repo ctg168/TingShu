@@ -1,6 +1,6 @@
 package com.terry.tingshu;
 
-class SystemConst {
+public class SystemConst {
 
     static final String ACTION_PLAYER_CONTROL = "action_player_control";
     static final String ACTION_MUSIC_SERVICE_INFO = "action_music_service_info";
@@ -20,8 +20,7 @@ class SystemConst {
     static final int INFO_PLAYER_PLAYING = 222;
     static final int INFO_PLAYER_PAUSE = 223;
 
-    static final String KEY_CURRENT_POSITION = "key_current_position";
-    static final String KEY_LAST_SONG_URL = "last_song";
-    static final String KEY_LAST_SONG_POS = "last_song_position";
+    public static final String KEY_LAST_SONG_URL = "last_song";
+    public static final String KEY_LAST_SONG_POS = "last_song_position";
 
 }

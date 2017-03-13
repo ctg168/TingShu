@@ -11,34 +11,22 @@ import com.joanzapata.iconify.Iconify;
 import com.joanzapata.iconify.fonts.FontAwesomeModule;
 import com.joanzapata.iconify.fonts.MaterialModule;
 import com.terry.tingshu.AudioPlayService;
+import com.terry.tingshu.helpers.SongHelper;
 
 import java.io.File;
 
 import static android.os.Environment.getExternalStoragePublicDirectory;
 
-/**
- * Created by terry on 2017/1/19.
- * Copyright (C) 2017 Terry Cheng
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 public class JetApplication extends Application {
 
-    private Context mContext;
+    private SongHelper songHelper;
 
     public AudioPlayService getService() {
         return mService;
+    }
+
+    public SongHelper getSongHelper() {
+        return songHelper;
     }
 
     public void setService(AudioPlayService mService) {
@@ -58,21 +46,19 @@ public class JetApplication extends Application {
     public void onCreate() {
         super.onCreate();
 
-        //Application context.
-        mContext = getApplicationContext();
-
         //SharedReferences.
         mSharedPreferences = this.getSharedPreferences(getPackageName(), Context.MODE_PRIVATE);
 
-        //sss
         Init();
     }
 
     private void Init() {
         initImageLoader(this);
-        //Toast.makeText(mContext, "Application Initialized...", Toast.LENGTH_SHORT).show();
+
         Iconify.with(new FontAwesomeModule())
                 .with(new MaterialModule());
+
+        initSongHelper();
 
         initService();
     }
@@ -80,6 +66,10 @@ public class JetApplication extends Application {
     private void initService() {
         Intent startIntent = new Intent(this, AudioPlayService.class);
         startService(startIntent);
+    }
+
+    private void initSongHelper() {
+        songHelper = new SongHelper(this);
     }
 
     private void initImageLoader(Context context) {
