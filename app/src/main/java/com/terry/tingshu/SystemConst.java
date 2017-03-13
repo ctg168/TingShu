@@ -2,10 +2,10 @@ package com.terry.tingshu;
 
 class SystemConst {
 
-    static final String ACTION_PLAYER_CONTROLL = "action_player_controll";
-    static final String ACTION_MUSIC_SEVICE_INFO = "action_music_sevice_info";
+    static final String ACTION_PLAYER_CONTROL = "action_player_control";
+    static final String ACTION_MUSIC_SERVICE_INFO = "action_music_service_info";
 
-    static final String EXTRA_KEY_PLAYER_CONTROLL = "extra_key_player_controll";
+    static final String EXTRA_KEY_PLAYER_CONTROL = "extra_key_player_control";
     static final String EXTRA_KEY_PLAYER_INFO = "extra_key_player_info";
 
     static final String EXTRA_KEY_CURRENT_POSITION = "extra_key_current_position";

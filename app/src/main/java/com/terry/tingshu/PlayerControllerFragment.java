@@ -73,8 +73,8 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
                 if (audioPlayService.getMusicPlayer().isPlaying()) {
-                    Intent intent = new Intent(SystemConst.ACTION_PLAYER_CONTROLL);
-                    intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROLL, SystemConst.PLAYER_PAUSE);
+                    Intent intent = new Intent(SystemConst.ACTION_PLAYER_CONTROL);
+                    intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROL, SystemConst.PLAYER_PAUSE);
                     localBroadcastManager.sendBroadcastSync(intent);
                 }
 
@@ -83,8 +83,8 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 if (!audioPlayService.getMusicPlayer().isPlaying()) {
-                    Intent intent = new Intent(SystemConst.ACTION_PLAYER_CONTROLL);
-                    intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROLL, SystemConst.PLAYER_PLAY);
+                    Intent intent = new Intent(SystemConst.ACTION_PLAYER_CONTROL);
+                    intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROL, SystemConst.PLAYER_PLAY);
                     localBroadcastManager.sendBroadcastSync(intent);
                 }
             }
@@ -112,7 +112,7 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
         localBroadcastManager.registerReceiver(new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                if (intent.getAction() != null && intent.getAction().equals(SystemConst.ACTION_MUSIC_SEVICE_INFO)) {
+                if (intent.getAction() != null && intent.getAction().equals(SystemConst.ACTION_MUSIC_SERVICE_INFO)) {
                     int control = intent.getIntExtra(SystemConst.EXTRA_KEY_PLAYER_INFO, -1);
                     if (control >= 0) {
                         int duration = audioPlayService.getMusicPlayer().getDuration();
@@ -137,25 +137,25 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
                 }
 
             }
-        }, new IntentFilter(SystemConst.ACTION_MUSIC_SEVICE_INFO));
+        }, new IntentFilter(SystemConst.ACTION_MUSIC_SERVICE_INFO));
     }
 
     @Override
     public void onClick(View v) {
-        Intent intent = new Intent(SystemConst.ACTION_PLAYER_CONTROLL);
+        Intent intent = new Intent(SystemConst.ACTION_PLAYER_CONTROL);
         switch (v.getId()) {
             case R.id.btn_player_play:
                 if (audioPlayService.getMusicPlayer().isPlaying()) {
-                    intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROLL, SystemConst.PLAYER_PAUSE);
+                    intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROL, SystemConst.PLAYER_PAUSE);
                 } else {
-                    intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROLL, SystemConst.PLAYER_PLAY);
+                    intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROL, SystemConst.PLAYER_PLAY);
                 }
                 break;
             case R.id.btn_player_previous:
-                intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROLL, SystemConst.PLAYER_PREVIOUS);
+                intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROL, SystemConst.PLAYER_PREVIOUS);
                 break;
             case R.id.btn_player_next:
-                intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROLL, SystemConst.PLAYER_NEXT);
+                intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROL, SystemConst.PLAYER_NEXT);
                 break;
             case R.id.btn_player_list:
                 showPlayList();

@@ -99,18 +99,17 @@ public class AudioPlayService extends ServiceBase {
             public void onPrepared(MediaPlayer mp) {
                 mPlayer.start();
 
-
-                Intent intent = new Intent(SystemConst.ACTION_MUSIC_SEVICE_INFO);
+                Intent intent = new Intent(SystemConst.ACTION_MUSIC_SERVICE_INFO);
                 intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_INFO, SystemConst.INFO_PLAYER_PLAYING);
                 localBroadcastManager.sendBroadcast(intent);
 
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        while (mPlayer.isPlaying()){
+                        while (mPlayer.isPlaying()) {
                             try {
                                 Thread.sleep(1000);
-                                Intent intent = new Intent(SystemConst.ACTION_MUSIC_SEVICE_INFO);
+                                Intent intent = new Intent(SystemConst.ACTION_MUSIC_SERVICE_INFO);
                                 intent.putExtra(SystemConst.EXTRA_KEY_CURRENT_POSITION, mPlayer.getCurrentPosition());
                                 localBroadcastManager.sendBroadcast(intent);
                             } catch (InterruptedException e) {
@@ -131,8 +130,8 @@ public class AudioPlayService extends ServiceBase {
         localBroadcastManager.registerReceiver(new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                if (intent.getAction() != null && intent.getAction().equals(SystemConst.ACTION_PLAYER_CONTROLL)) {
-                    int control = intent.getIntExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROLL, -1);
+                if (intent.getAction() != null && intent.getAction().equals(SystemConst.ACTION_PLAYER_CONTROL)) {
+                    int control = intent.getIntExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROL, -1);
                     // ============== 广播订阅 ===============
                     //播放服务接收的广播信息有：
                     //当前的播放状态：播放，暂停，上一首，下一首
@@ -156,7 +155,7 @@ public class AudioPlayService extends ServiceBase {
                     }
                 }
             }
-        }, new IntentFilter(SystemConst.ACTION_PLAYER_CONTROLL));
+        }, new IntentFilter(SystemConst.ACTION_PLAYER_CONTROL));
 
     }
 
@@ -197,13 +196,15 @@ public class AudioPlayService extends ServiceBase {
     private void playerPause() {
         if (mPlayer != null && mPlayer.isPlaying()) {
             mPlayer.pause();
-            Intent intent = new Intent(SystemConst.ACTION_MUSIC_SEVICE_INFO);
+            Intent intent = new Intent(SystemConst.ACTION_MUSIC_SERVICE_INFO);
             intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_INFO, SystemConst.INFO_PLAYER_PAUSE);
             localBroadcastManager.sendBroadcast(intent);
 
-            mApp.getSharedPreferences().edit().putString(SystemConst.KEY_LAST_SONG_URL, songHelper.get().getUri()).apply();
-            mApp.getSharedPreferences().edit().putInt(SystemConst.KEY_LAST_SONG_POS, mPlayer.getCurrentPosition()).apply();
+            String lastUrl = songHelper.get().getUri();
+            int lastPos = mPlayer.getCurrentPosition();
 
+            mApp.getSharedPreferences().edit().putString(SystemConst.KEY_LAST_SONG_URL, lastUrl).apply();
+            mApp.getSharedPreferences().edit().putInt(SystemConst.KEY_LAST_SONG_POS, lastPos).apply();
         }
     }
 
@@ -230,12 +231,13 @@ public class AudioPlayService extends ServiceBase {
     private void resumePlay() {
         String lastUrl = mApp.getSharedPreferences().getString(SystemConst.KEY_LAST_SONG_URL, "");
         int lastPos = mApp.getSharedPreferences().getInt(SystemConst.KEY_LAST_SONG_POS, 0);
-        initSongHelper(lastUrl);
 
-        if (lastUrl.length() > 0)
+        if (lastUrl.length() > 0) {
+            initSongHelper(lastUrl);
             playerPlay(Uri.parse(lastUrl));
-        if (lastPos > 0)
-            mPlayer.seekTo(lastPos);
+            if (lastPos > 0)
+                mPlayer.seekTo(lastPos);
+        }
     }
 
     public SongHelper getSongHelper() {
