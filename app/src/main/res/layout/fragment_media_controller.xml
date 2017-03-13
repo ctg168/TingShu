@@ -19,7 +19,7 @@
             android:layout_height="wrap_content"
             android:text="05:04" />
 
-        <ProgressBar
+        <SeekBar
             android:id="@+id/progress"
             style="@style/Widget.AppCompat.ProgressBar.Horizontal"
             android:layout_width="0dp"

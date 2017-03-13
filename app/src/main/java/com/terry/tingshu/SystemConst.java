@@ -20,6 +20,7 @@ class SystemConst {
     static final int INFO_PLAYER_PLAYING = 222;
     static final int INFO_PLAYER_PAUSE = 223;
 
+    static final String KEY_CURRENT_POSITION = "key_current_position";
     static final String KEY_LAST_SONG_URL = "last_song";
     static final String KEY_LAST_SONG_POS = "last_song_position";
 

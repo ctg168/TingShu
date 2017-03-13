@@ -98,9 +98,28 @@ public class AudioPlayService extends ServiceBase {
             @Override
             public void onPrepared(MediaPlayer mp) {
                 mPlayer.start();
+
+
                 Intent intent = new Intent(SystemConst.ACTION_MUSIC_SEVICE_INFO);
                 intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_INFO, SystemConst.INFO_PLAYER_PLAYING);
                 localBroadcastManager.sendBroadcast(intent);
+
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        while (mPlayer.isPlaying()){
+                            try {
+                                Thread.sleep(1000);
+                                Intent intent = new Intent(SystemConst.ACTION_MUSIC_SEVICE_INFO);
+                                intent.putExtra(SystemConst.EXTRA_KEY_CURRENT_POSITION, mPlayer.getCurrentPosition());
+                                localBroadcastManager.sendBroadcast(intent);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+
+                        }
+                    }
+                }).start();
 
             }
         });
@@ -141,24 +160,6 @@ public class AudioPlayService extends ServiceBase {
 
     }
 
-    private void initProgressBroadcast() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(500);
-                    if (mPlayer.isPlaying()) {
-                        Intent intent = new Intent(SystemConst.ACTION_MUSIC_SEVICE_INFO);
-                        intent.putExtra(SystemConst.EXTRA_KEY_CURRENT_POSITION, mPlayer.getCurrentPosition());
-                        localBroadcastManager.sendBroadcast(intent);
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
-    }
-
     private void initSongHelper(String songUrl) {
         File songfile = new File(songUrl);
         this.songHelper.loadPlayList(songfile.getParent());
@@ -186,6 +187,8 @@ public class AudioPlayService extends ServiceBase {
         try {
             mPlayer.setDataSource(this, songURI);
             mPlayer.prepareAsync();
+            mApp.getSharedPreferences().edit().putString(SystemConst.KEY_LAST_SONG_URL, songURI.getPath()).apply();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -227,7 +230,8 @@ public class AudioPlayService extends ServiceBase {
     private void resumePlay() {
         String lastUrl = mApp.getSharedPreferences().getString(SystemConst.KEY_LAST_SONG_URL, "");
         int lastPos = mApp.getSharedPreferences().getInt(SystemConst.KEY_LAST_SONG_POS, 0);
-        mApp.getSharedPreferences().edit().putString(SystemConst.KEY_LAST_SONG_URL, lastUrl.toString()).apply();
+        initSongHelper(lastUrl);
+
         if (lastUrl.length() > 0)
             playerPlay(Uri.parse(lastUrl));
         if (lastPos > 0)

@@ -11,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.joanzapata.iconify.widget.IconTextView;
@@ -24,7 +25,7 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
     //region controls define
     TextView tvCurrentPosition;
     TextView tvDuration;
-    ProgressBar progressBar;
+    SeekBar progressBar;
 
     IconTextView btnPlayerPrevious;
     IconTextView btnPlayerPlay;
@@ -49,7 +50,7 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
         //region controls init
         tvCurrentPosition = (TextView) view.findViewById(R.id.tv_current_position);
         tvDuration = (TextView) view.findViewById(R.id.tv_duration);
-        progressBar = (ProgressBar) view.findViewById(R.id.progress);
+        progressBar = (SeekBar) view.findViewById(R.id.progress);
 
         btnPlayerPrevious = (IconTextView) view.findViewById(R.id.btn_player_previous);
         btnPlayerPlay = (IconTextView) view.findViewById(R.id.btn_player_play);
@@ -62,6 +63,32 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
         btnPlayerNext.setOnClickListener(this);
         btnPlayerList.setOnClickListener(this);
         btnPlayerAutoStop.setOnClickListener(this);
+
+        progressBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                audioPlayService.getMusicPlayer().seekTo(progressBar.getProgress());
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                if (audioPlayService.getMusicPlayer().isPlaying()) {
+                    Intent intent = new Intent(SystemConst.ACTION_PLAYER_CONTROLL);
+                    intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROLL, SystemConst.PLAYER_PAUSE);
+                    localBroadcastManager.sendBroadcastSync(intent);
+                }
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                if (!audioPlayService.getMusicPlayer().isPlaying()) {
+                    Intent intent = new Intent(SystemConst.ACTION_PLAYER_CONTROLL);
+                    intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROLL, SystemConst.PLAYER_PLAY);
+                    localBroadcastManager.sendBroadcastSync(intent);
+                }
+            }
+        });
 
 
         //endregion
@@ -88,60 +115,33 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
                 if (intent.getAction() != null && intent.getAction().equals(SystemConst.ACTION_MUSIC_SEVICE_INFO)) {
                     int control = intent.getIntExtra(SystemConst.EXTRA_KEY_PLAYER_INFO, -1);
                     if (control >= 0) {
+                        int duration = audioPlayService.getMusicPlayer().getDuration();
+                        tvCurrentPosition.setText(stringForTime(0));
+                        tvDuration.setText(stringForTime(duration));
+                        progressBar.setMax(audioPlayService.getMusicPlayer().getDuration());
+                        progressBar.setProgress(0);
 
-                        getActivity().runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                               // showPlayInfo();
-                            }
-                        });
-
-                        // ============== 广播订阅 ===============
-                        //播放服务发布的信息有：
-                        //当前播放的歌曲，位置.
-                        //当前的播放状态：播放，停止，暂停
-//                        switch (control) {
-//                            case SystemConst.INFO_PLAYER_PLAYING:
-//
-//                                break;
-//                            case SystemConst.INFO_PLAYER_PAUSE:
-//                                showPlayInfo();
-//                                break;
-//                        }
+                        if (audioPlayService.getMusicPlayer().isPlaying()) {
+                            btnPlayerPlay.setText(getString(R.string.player_pause));
+                        } else {
+                            btnPlayerPlay.setText(getString(R.string.player_play));
+                        }
                     }
+
+                    int pos = intent.getIntExtra(SystemConst.EXTRA_KEY_CURRENT_POSITION, -1);
+                    if (pos >= 0) {
+                        progressBar.setProgress(pos);
+                        tvCurrentPosition.setText(stringForTime(pos));
+                    }
+
                 }
 
             }
         }, new IntentFilter(SystemConst.ACTION_MUSIC_SEVICE_INFO));
     }
 
-    private void showPlayInfo() {
-        int duration = audioPlayService.getMusicPlayer().getDuration();
-        tvDuration.setText(stringForTime(duration));
-        progressBar.setMax(audioPlayService.getMusicPlayer().getDuration());
-        if (audioPlayService.getMusicPlayer().isPlaying()) {
-            btnPlayerPlay.setText(getString(R.string.player_pause));
-            while (audioPlayService.getMusicPlayer().isPlaying()) {
-                try {
-                    int currentPos = audioPlayService.getMusicPlayer().getCurrentPosition();
-                    tvCurrentPosition.setText(stringForTime(currentPos));
-                    progressBar.setProgress(currentPos);
-
-                    Thread.sleep(1000);
-
-                    System.out.println("PlayerControllerFragment.showPlayInfo: " + currentPos + "/" + duration);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        } else {
-            btnPlayerPlay.setText(getString(R.string.player_play));
-        }
-    }
-
     @Override
     public void onClick(View v) {
-
         Intent intent = new Intent(SystemConst.ACTION_PLAYER_CONTROLL);
         switch (v.getId()) {
             case R.id.btn_player_play:
