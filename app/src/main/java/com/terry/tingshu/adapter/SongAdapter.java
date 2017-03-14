@@ -53,7 +53,7 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder> {
     public void onBindViewHolder(final ViewHolder holder, int position) {
         Song song = songList.get(position);
         holder.tvSongName.setText(song.getFileName());
-        if (song.getUri().equals(playingSong)) {
+        if (song.getFilePath().equals(playingSong)) {
             holder.isCurrentPlaying.setVisibility(View.VISIBLE);
         } else {
             holder.isCurrentPlaying.setVisibility(View.INVISIBLE);

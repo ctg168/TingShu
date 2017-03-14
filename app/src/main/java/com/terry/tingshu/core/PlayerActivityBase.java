@@ -9,7 +9,7 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 
-import com.terry.tingshu.helpers.SongHelper;
+import com.terry.tingshu.GlobalSongManager;
 import com.terry.tingshu.AudioPlayService;
 
 /**
@@ -33,7 +33,7 @@ public abstract class PlayerActivityBase extends AppCompatActivity {
     private Context mContext;
     protected AudioPlayService playService;
 
-    protected SongHelper mSongHelper;
+    protected GlobalSongManager globalSongManager;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -61,11 +61,11 @@ public abstract class PlayerActivityBase extends AppCompatActivity {
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            AudioPlayService playbackService = ((AudioPlayService.MyBinder) service).getService();
+            AudioPlayService playbackService = ((AudioPlayService.ServiceBinder) service).getService();
             if (playbackService != null) {
                 mApp.setService(playbackService);
                 playService = mApp.getService();
-                mSongHelper = playbackService.getSongHelper();
+                globalSongManager =  mApp.getGlobalSongManager();
                 onPostServiceBind();
             }
         }

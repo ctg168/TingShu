@@ -5,13 +5,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Environment;
-import android.widget.Toast;
 
 import com.joanzapata.iconify.Iconify;
 import com.joanzapata.iconify.fonts.FontAwesomeModule;
 import com.joanzapata.iconify.fonts.MaterialModule;
 import com.terry.tingshu.AudioPlayService;
-import com.terry.tingshu.helpers.SongHelper;
+import com.terry.tingshu.GlobalSongManager;
 
 import java.io.File;
 
@@ -19,14 +18,14 @@ import static android.os.Environment.getExternalStoragePublicDirectory;
 
 public class JetApplication extends Application {
 
-    private SongHelper songHelper;
+    private GlobalSongManager globalSongManager;
 
     public AudioPlayService getService() {
         return mService;
     }
 
-    public SongHelper getSongHelper() {
-        return songHelper;
+    public GlobalSongManager getGlobalSongManager() {
+        return globalSongManager;
     }
 
     public void setService(AudioPlayService mService) {
@@ -58,7 +57,7 @@ public class JetApplication extends Application {
         Iconify.with(new FontAwesomeModule())
                 .with(new MaterialModule());
 
-        initSongHelper();
+        initSongManager();
 
         initService();
     }
@@ -68,8 +67,8 @@ public class JetApplication extends Application {
         startService(startIntent);
     }
 
-    private void initSongHelper() {
-        songHelper = new SongHelper(this);
+    private void initSongManager() {
+        globalSongManager = new GlobalSongManager(this);
     }
 
     private void initImageLoader(Context context) {

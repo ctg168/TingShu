@@ -7,15 +7,19 @@ import android.widget.TextView;
 
 import com.terry.tingshu.adapter.SongAdapter;
 import com.terry.tingshu.core.DialogFragmentBase;
+import com.terry.tingshu.entity.Song;
 import com.terry.tingshu.helpers.SongHelper;
+
+import java.util.List;
 
 public class SongsInFolderDialog extends DialogFragmentBase {
     TextView tvFolderPath;
     RecyclerView songsView;
     SongAdapter adapter;
 
-    SongHelper mSongHelper;
     String folderPath;
+
+    List<Song> mSongList;
 
     public String getFolderPath() {
         return folderPath;
@@ -36,24 +40,28 @@ public class SongsInFolderDialog extends DialogFragmentBase {
         tvFolderPath = (TextView) layoutView.findViewById(R.id.tv_folder_path);
 
         tvFolderPath.setText(folderPath);
-        mSongHelper = new SongHelper(getActivity());
-        mSongHelper.loadPlayList(folderPath);
+
+        mSongList = SongHelper.getSongsInFolder(folderPath);
 
         fillPlayList();
     }
 
-    private void fillPlayList(){
+    private void fillPlayList() {
 
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this.getActivity(), LinearLayoutManager.VERTICAL, false);
         songsView.setLayoutManager(layoutManager);
-        //songsView.setHasFixedSize(false);
         songsView.setNestedScrollingEnabled(false);
 
-        adapter = new SongAdapter(mSongHelper.getSongList());
+        adapter = new SongAdapter(mSongList);
         adapter.setOnItemClickListener(new SongAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(View view, int position) {
-                mApp.getService().playSong(mSongHelper.getSongList().get(position));
+                // mApp.getService().playSong(songManager.getSongList().get(position));
+                // TODO: 2017/3/14 send broadcast to play a song.
+                Song selectedSong = mSongList.get(position);
+
+
+
                 dismiss();
             }
         });

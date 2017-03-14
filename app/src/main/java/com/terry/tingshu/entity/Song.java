@@ -3,29 +3,23 @@ package com.terry.tingshu.entity;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-/**
- * Created by terry on 2017/1/11.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 public class Song implements Parcelable {
     private int id;
-    private String uri;
+    private String filePath;
     private int duration;
     private float size;
     private boolean isDownloaded;
     private boolean isCached;
+
+    public int getLastPlayPosition() {
+        return lastPlayPosition;
+    }
+
+    public void setLastPlayPosition(int lastPlayPosition) {
+        this.lastPlayPosition = lastPlayPosition;
+    }
+
+    private int lastPlayPosition;
 
     public int getId() {
         return id;
@@ -35,12 +29,12 @@ public class Song implements Parcelable {
         this.id = id;
     }
 
-    public String getUri() {
-        return uri;
+    public String getFilePath() {
+        return filePath;
     }
 
-    public void setUri(String uri) {
-        this.uri = uri;
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
     }
 
     public int getDuration() {
@@ -83,11 +77,12 @@ public class Song implements Parcelable {
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeInt(this.id);
-        dest.writeString(this.uri);
+        dest.writeString(this.filePath);
         dest.writeInt(this.duration);
         dest.writeFloat(this.size);
         dest.writeByte(this.isDownloaded ? (byte) 1 : (byte) 0);
         dest.writeByte(this.isCached ? (byte) 1 : (byte) 0);
+        dest.writeInt(this.lastPlayPosition);
     }
 
     public Song() {
@@ -95,11 +90,12 @@ public class Song implements Parcelable {
 
     protected Song(Parcel in) {
         this.id = in.readInt();
-        this.uri = in.readString();
+        this.filePath = in.readString();
         this.duration = in.readInt();
         this.size = in.readFloat();
         this.isDownloaded = in.readByte() != 0;
         this.isCached = in.readByte() != 0;
+        this.lastPlayPosition = in.readInt();
     }
 
     public static final Creator<Song> CREATOR = new Creator<Song>() {
@@ -115,10 +111,10 @@ public class Song implements Parcelable {
     };
 
     public String getFileName() {
-        int start = this.uri.lastIndexOf("/");
-        int end = this.uri.lastIndexOf(".");
+        int start = this.filePath.lastIndexOf("/");
+        int end = this.filePath.lastIndexOf(".");
         if (start != -1 && end != -1) {
-            return this.uri.substring(start + 1, end);
+            return this.filePath.substring(start + 1, end);
         } else {
             return null;
         }

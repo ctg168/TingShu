@@ -22,7 +22,6 @@ import android.widget.RemoteViews;
 import com.terry.tingshu.core.JetApplication;
 import com.terry.tingshu.core.ServiceBase;
 import com.terry.tingshu.entity.Song;
-import com.terry.tingshu.helpers.SongHelper;
 
 import java.io.IOException;
 
@@ -31,9 +30,9 @@ import java.io.IOException;
  */
 public class AudioPlayService extends ServiceBase {
     private JetApplication mApp;
-    private SongHelper songHelper;
+    private GlobalSongManager globalSongManager;
     private MusicPlayer mPlayer;
-    private MyBinder mBinder = new MyBinder();
+    private ServiceBinder mBinder = new ServiceBinder();
 
     private LocalBroadcastManager localBroadcastManager;
     private NotificationCompat.Builder mNotificationBuilder;
@@ -43,6 +42,10 @@ public class AudioPlayService extends ServiceBase {
 
     private NotificationBuilder notificationBuilder;
 
+    /**
+     * 是否是第一次(本次启动后)播放某一首歌曲，因为第一次播放时要做一些事情，例如显示播放控制通知栏，如果
+     * 是播放第二首歌曲，则不需要再重新显示播放通知栏，而仅需要更新通知栏内容。
+     */
     private boolean isFirstRun = true;
 
     public static final int mNotificationId = 1080; //NOTE: Using 0 as a notification ID causes Android to ignore the notification call.
@@ -78,7 +81,7 @@ public class AudioPlayService extends ServiceBase {
     public int onStartCommand(Intent intent, int flags, int startId) {
         mApp = (JetApplication) getApplicationContext();
         mApp.setService(this);
-        songHelper = mApp.getSongHelper();
+        globalSongManager = mApp.getGlobalSongManager();
         notificationBuilder = new NotificationBuilder();
 
         initMsgBroadCast();
@@ -122,16 +125,14 @@ public class AudioPlayService extends ServiceBase {
             @Override
             public void onPrepared(MediaPlayer mp) {
 
-                if (songHelper.getLastPosition() >= 0) {
-                    mPlayer.seekTo(songHelper.getLastPosition());
-                }
-
                 Intent intent = new Intent(SystemConst.ACTION_MUSIC_SERVICE_INFO);
                 intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_INFO, SystemConst.INFO_PLAYER_PLAYING);
                 localBroadcastManager.sendBroadcast(intent);
 
                 if (isFirstRun) {
                     mPlayer.start();
+                    mPlayer.seekTo(globalSongManager.get().getLastPlayPosition());
+
                     isFirstRun = false;
                     new Thread(new Runnable() {
                         @Override
@@ -196,26 +197,12 @@ public class AudioPlayService extends ServiceBase {
 
     }
 
-    public MusicPlayer getMusicPlayer() {
-        return mPlayer;
-    }
-
-    /**
-     * 播放某一首歌.
-     *
-     * @param song 指定播放的歌曲.
-     */
-    public void playSong(Song song) {
-        this.songHelper.init(song);
-        preparePlayer(this.songHelper.get());
-    }
-
     private void preparePlayer(Song song) {
         if (mPlayer != null) {
             mPlayer.reset();
         }
         try {
-            Uri songUri = Uri.parse("file://" + song.getUri());
+            Uri songUri = Uri.parse("file://" + song.getFilePath());
             mPlayer.setDataSource(this, songUri);
             mPlayer.prepareAsync();
 
@@ -238,7 +225,7 @@ public class AudioPlayService extends ServiceBase {
             localBroadcastManager.sendBroadcast(intent);
             //endregion
 
-            String lastUrl = songHelper.get().getUri();
+            String lastUrl = globalSongManager.get().getFilePath();
             int lastPos = mPlayer.getCurrentPosition();
 
             mApp.getSharedPreferences().edit().putString(SystemConst.KEY_LAST_SONG_URL, lastUrl).apply();
@@ -247,33 +234,37 @@ public class AudioPlayService extends ServiceBase {
     }
 
     private void playerStart() {
-        resumePlay();
+        //启动播放有以下可能：继续播放，点击一首歌曲播放.统一由SongManager来控制.
+        preparePlayer(globalSongManager.getLastSong());
+
     }
 
     private void playerPrevious() {
-        if (mPlayer != null) {
-            if (songHelper.movePrevious()) {
-                playSong(songHelper.get());
-            }
+        if (globalSongManager.movePrevious()) {
+            playSong(globalSongManager.get());
         }
     }
 
     private void playerNext() {
-        if (mPlayer != null) {
-            if (songHelper.moveNext()) {
-                playSong(songHelper.get());
-            }
+        if (globalSongManager.moveNext()) {
+            playSong(globalSongManager.get());
         }
     }
 
-    private void resumePlay() {
-        preparePlayer(songHelper.getLastSong());
+    private void playerResume() {
+        mPlayer.start();
     }
 
 
+    private void playSong(Song song) {
+        preparePlayer(song);
+    }
 
+    public MusicPlayer getMusicPlayer() {
+        return mPlayer;
+    }
 
-    public class MyBinder extends Binder {
+    public class ServiceBinder extends Binder {
         public AudioPlayService getService() {
             return AudioPlayService.this;
         }
@@ -336,16 +327,16 @@ public class AudioPlayService extends ServiceBase {
             }
 
             //Set the notification content. (设置新标题栏的文字)
-            expNotificationView.setTextViewText(R.id.notification_expanded_base_line_one, songHelper.get().getFileName());
-            expNotificationView.setTextViewText(R.id.notification_expanded_base_line_two, songHelper.get().getFileName());
-            expNotificationView.setTextViewText(R.id.notification_expanded_base_line_three, songHelper.get().getFileName());
+            expNotificationView.setTextViewText(R.id.notification_expanded_base_line_one, globalSongManager.get().getFileName());
+            expNotificationView.setTextViewText(R.id.notification_expanded_base_line_two, globalSongManager.get().getFileName());
+            expNotificationView.setTextViewText(R.id.notification_expanded_base_line_three, globalSongManager.get().getFileName());
 
             //Set the notification content. (设置标题栏的第一行和第二行文字)
-            notificationView.setTextViewText(R.id.notification_base_line_one, songHelper.get().getFileName());
-            notificationView.setTextViewText(R.id.notification_base_line_two, songHelper.get().getUri());
+            notificationView.setTextViewText(R.id.notification_base_line_one, globalSongManager.get().getFileName());
+            notificationView.setTextViewText(R.id.notification_base_line_two, globalSongManager.get().getFilePath());
 
             //根据不同情况设置不同按钮的图标、可见度、点击事件.
-            if (songHelper.isOnlySongInQueue()) {
+            if (globalSongManager.isOnlySongInQueue()) {
 
                 expNotificationView.setViewVisibility(R.id.notification_expanded_base_next, View.INVISIBLE);
                 expNotificationView.setViewVisibility(R.id.notification_expanded_base_previous, View.INVISIBLE);
@@ -354,7 +345,7 @@ public class AudioPlayService extends ServiceBase {
                 notificationView.setViewVisibility(R.id.notification_base_next, View.INVISIBLE);
                 notificationView.setViewVisibility(R.id.notification_base_previous, View.INVISIBLE);
                 notificationView.setOnClickPendingIntent(R.id.notification_base_play, playPauseTrackPendingIntent);
-            } else if (songHelper.isFirstSongInQueue()) {
+            } else if (globalSongManager.isFirstSongInQueue()) {
 
                 expNotificationView.setViewVisibility(R.id.notification_expanded_base_previous, View.INVISIBLE);
                 expNotificationView.setViewVisibility(R.id.notification_expanded_base_next, View.VISIBLE);
@@ -365,7 +356,7 @@ public class AudioPlayService extends ServiceBase {
                 notificationView.setViewVisibility(R.id.notification_base_next, View.VISIBLE);
                 notificationView.setOnClickPendingIntent(R.id.notification_base_play, playPauseTrackPendingIntent);
                 notificationView.setOnClickPendingIntent(R.id.notification_base_next, nextTrackPendingIntent);
-            } else if (songHelper.isLastSongInQueue()) {
+            } else if (globalSongManager.isLastSongInQueue()) {
 
                 expNotificationView.setViewVisibility(R.id.notification_expanded_base_previous, View.VISIBLE);
                 expNotificationView.setViewVisibility(R.id.notification_expanded_base_next, View.INVISIBLE);
@@ -452,20 +443,20 @@ public class AudioPlayService extends ServiceBase {
             }
 
             //Set the notification content. (设置标题栏的第一行和第二行文字)
-            notificationView.setTextViewText(R.id.notification_base_line_one, songHelper.get().getFileName());
-            notificationView.setTextViewText(R.id.notification_base_line_two, songHelper.get().getUri());
+            notificationView.setTextViewText(R.id.notification_base_line_one, globalSongManager.get().getFileName());
+            notificationView.setTextViewText(R.id.notification_base_line_two, globalSongManager.get().getFilePath());
 
             //根据不同情况设置不同按钮的图标、可见度、点击事件.
-            if (songHelper.isOnlySongInQueue()) {
+            if (globalSongManager.isOnlySongInQueue()) {
                 notificationView.setViewVisibility(R.id.notification_base_next, View.INVISIBLE);
                 notificationView.setViewVisibility(R.id.notification_base_previous, View.INVISIBLE);
                 notificationView.setOnClickPendingIntent(R.id.notification_base_play, playPauseTrackPendingIntent);
-            } else if (songHelper.isFirstSongInQueue()) {
+            } else if (globalSongManager.isFirstSongInQueue()) {
                 notificationView.setViewVisibility(R.id.notification_base_previous, View.INVISIBLE);
                 notificationView.setViewVisibility(R.id.notification_base_next, View.VISIBLE);
                 notificationView.setOnClickPendingIntent(R.id.notification_base_play, playPauseTrackPendingIntent);
                 notificationView.setOnClickPendingIntent(R.id.notification_base_next, nextTrackPendingIntent);
-            } else if (songHelper.isLastSongInQueue()) {
+            } else if (globalSongManager.isLastSongInQueue()) {
                 notificationView.setViewVisibility(R.id.notification_base_previous, View.VISIBLE);
                 notificationView.setViewVisibility(R.id.notification_base_next, View.INVISIBLE);
                 notificationView.setOnClickPendingIntent(R.id.notification_base_play, playPauseTrackPendingIntent);
