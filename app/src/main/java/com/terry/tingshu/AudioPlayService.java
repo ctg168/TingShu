@@ -1,14 +1,11 @@
 package com.terry.tingshu;
 
-import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -22,7 +19,6 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.view.View;
 import android.widget.RemoteViews;
 
-import com.joanzapata.iconify.Iconify;
 import com.terry.tingshu.core.JetApplication;
 import com.terry.tingshu.core.ServiceBase;
 import com.terry.tingshu.entity.Song;
@@ -40,8 +36,9 @@ public class AudioPlayService extends ServiceBase {
     private NotificationCompat.Builder mNotificationBuilder;
 
     private MediaPlayer.OnPreparedListener mediaPlayerPrepared;
+    private MediaPlayer.OnCompletionListener mediaPlayerCompleted;
 
-
+    private boolean isFirstRun = true;
 
     public static final int mNotificationId = 1080; //NOTE: Using 0 as a notification ID causes Android to ignore the notification call.
 
@@ -110,42 +107,53 @@ public class AudioPlayService extends ServiceBase {
         mPlayer.setWakeMode(this, PowerManager.PARTIAL_WAKE_LOCK);
         mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
         mPlayer.setOnPreparedListener(mediaPlayerPrepared);
+        mPlayer.setOnCompletionListener(mediaPlayerCompleted);
     }
 
     private void initPlayerListener() {
+
         mediaPlayerPrepared = new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mp) {
-                mPlayer.start();
 
-                int lastPos = mApp.getSharedPreferences().getInt(SystemConst.KEY_LAST_SONG_POS, 0);
-                if (lastPos > 0)
-                    mPlayer.seekTo(lastPos);
+                if (songHelper.getLastPosition() >= 0) {
+                    mPlayer.seekTo(songHelper.getLastPosition());
+                }
 
                 Intent intent = new Intent(SystemConst.ACTION_MUSIC_SERVICE_INFO);
                 intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_INFO, SystemConst.INFO_PLAYER_PLAYING);
                 localBroadcastManager.sendBroadcast(intent);
 
-                //mApp.getSharedPreferences().edit().putString(SystemConst.KEY_LAST_SONG_URL, songURI.getPath()).apply();
+                if (isFirstRun) {
+                    mPlayer.start();
+                    isFirstRun = false;
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            while (mPlayer.isPlaying()) {
+                                try {
+                                    Thread.sleep(1000);
+                                    Intent intent = new Intent(SystemConst.ACTION_MUSIC_SERVICE_INFO);
+                                    intent.putExtra(SystemConst.EXTRA_KEY_CURRENT_POSITION, mPlayer.getCurrentPosition());
+                                    localBroadcastManager.sendBroadcast(intent);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
 
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        while (mPlayer.isPlaying()) {
-                            try {
-                                Thread.sleep(1000);
-                                Intent intent = new Intent(SystemConst.ACTION_MUSIC_SERVICE_INFO);
-                                intent.putExtra(SystemConst.EXTRA_KEY_CURRENT_POSITION, mPlayer.getCurrentPosition());
-                                localBroadcastManager.sendBroadcast(intent);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
                             }
-
                         }
-                    }
-                }).start();
+                    }).start();
+                }
             }
         };
+
+        mediaPlayerCompleted = new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+
+            }
+        };
+
     }
 
     private void initMsgBroadCast() {
@@ -193,10 +201,10 @@ public class AudioPlayService extends ServiceBase {
      */
     public void playSong(Song song) {
         this.songHelper.init(song);
-        playerPlay(this.songHelper.get());
+        preparePlayer(this.songHelper.get());
     }
 
-    private void playerPlay(Song song) {
+    private void preparePlayer(Song song) {
         if (mPlayer != null) {
             mPlayer.reset();
         }
@@ -204,6 +212,11 @@ public class AudioPlayService extends ServiceBase {
             Uri songUri = Uri.parse("file://" + song.getUri());
             mPlayer.setDataSource(this, songUri);
             mPlayer.prepareAsync();
+
+            if (isFirstRun) {
+                //Set this service as a foreground service.
+                startForeground(mNotificationId, buildNotification());
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -248,7 +261,7 @@ public class AudioPlayService extends ServiceBase {
     }
 
     private void resumePlay() {
-        playerPlay(songHelper.getLastSong());
+        preparePlayer(songHelper.getLastSong());
     }
 
     private boolean isOnlySongInQueue() {
@@ -270,7 +283,6 @@ public class AudioPlayService extends ServiceBase {
             return buildICSNotification();
         }
     }
-
 
     /**
      * version code >= 16
@@ -474,7 +486,6 @@ public class AudioPlayService extends ServiceBase {
 
         return notification;
     }
-
 
     public class MyBinder extends Binder {
         public AudioPlayService getService() {
