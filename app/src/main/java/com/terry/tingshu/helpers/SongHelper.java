@@ -61,10 +61,21 @@ public class SongHelper {
         return null;
     }
 
+    public boolean isOnlySongInQueue() {
+        return songList.size() == 1;
+    }
+
+    public boolean isFirstSongInQueue() {
+        return mCurrentIndex == 0;
+    }
+
+    public boolean isLastSongInQueue() {
+        return mCurrentIndex == songList.size() - 1;
+    }
+
     public int getLastPosition() {
         return mApp.getSharedPreferences().getInt(SystemConst.KEY_LAST_SONG_POS, -1);
     }
-
 
     public boolean moveNext() {
         if (songList != null && songList.size() > 0) {

@@ -26,6 +26,9 @@ import com.terry.tingshu.helpers.SongHelper;
 
 import java.io.IOException;
 
+/**
+ *
+ */
 public class AudioPlayService extends ServiceBase {
     private JetApplication mApp;
     private SongHelper songHelper;
@@ -37,6 +40,8 @@ public class AudioPlayService extends ServiceBase {
 
     private MediaPlayer.OnPreparedListener mediaPlayerPrepared;
     private MediaPlayer.OnCompletionListener mediaPlayerCompleted;
+
+    private NotificationBuilder notificationBuilder;
 
     private boolean isFirstRun = true;
 
@@ -74,6 +79,7 @@ public class AudioPlayService extends ServiceBase {
         mApp = (JetApplication) getApplicationContext();
         mApp.setService(this);
         songHelper = mApp.getSongHelper();
+        notificationBuilder = new NotificationBuilder();
 
         initMsgBroadCast();
         initMediaPlayer();
@@ -215,7 +221,7 @@ public class AudioPlayService extends ServiceBase {
 
             if (isFirstRun) {
                 //Set this service as a foreground service.
-                startForeground(mNotificationId, buildNotification());
+                startForeground(mNotificationId, notificationBuilder.buildNotification());
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -264,228 +270,8 @@ public class AudioPlayService extends ServiceBase {
         preparePlayer(songHelper.getLastSong());
     }
 
-    private boolean isOnlySongInQueue() {
-        return false;
-    }
-
-    private boolean isFirstSongInQueue() {
-        return false;
-    }
-
-    private boolean isLastSongInQueue() {
-        return false;
-    }
-
-    private Notification buildNotification() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            return buildJBNotification();
-        } else {
-            return buildICSNotification();
-        }
-    }
-
-    /**
-     * version code >= 16
-     */
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
-    //@SuppressLint("NewApi")
-    private Notification buildJBNotification() {
-        mNotificationBuilder = new NotificationCompat.Builder(mApp);
-        mNotificationBuilder.setOngoing(true); //设置为一个正在进行的通知。通常是用来表示一个后台任务,用户积极参与(如播放音乐)或以某种方式正在等待,因此占用设备(如一个文件下载,同步操作,主动网络连接)
-        mNotificationBuilder.setAutoCancel(false);
-        mNotificationBuilder.setSmallIcon(R.mipmap.ic_launcher);
-
-        //Open up the player screen when the user taps on the notification.
-        Intent launchNowPlayingIntent = new Intent();
-        launchNowPlayingIntent.setAction(AudioPlayService.LAUNCH_NOW_PLAYING_ACTION);
-        PendingIntent launchNowPlayingPendingIntent = PendingIntent.getBroadcast(mApp, 0, launchNowPlayingIntent, 0);
-        mNotificationBuilder.setContentIntent(launchNowPlayingPendingIntent);
-
-        //Grab the notification layouts.
-        RemoteViews notificationView = new RemoteViews(getPackageName(), R.layout.notification_custom_layout);
-        RemoteViews expNotificationView = new RemoteViews(getPackageName(), R.layout.notification_custom_expanded_layout);
-
-        //Initialize the notification layout buttons.
-        Intent previousTrackIntent = new Intent();
-        previousTrackIntent.setAction(AudioPlayService.PREVIOUS_ACTION);
-        PendingIntent previousTrackPendingIntent = PendingIntent.getBroadcast(mApp, 0, previousTrackIntent, 0);
-
-        Intent playPauseTrackIntent = new Intent();
-        playPauseTrackIntent.setAction(AudioPlayService.PLAY_PAUSE_ACTION);
-        PendingIntent playPauseTrackPendingIntent = PendingIntent.getBroadcast(mApp, 0, playPauseTrackIntent, 0);
-
-        Intent nextTrackIntent = new Intent();
-        nextTrackIntent.setAction(AudioPlayService.NEXT_ACTION);
-        PendingIntent nextTrackPendingIntent = PendingIntent.getBroadcast(mApp, 0, nextTrackIntent, 0);
-
-        Intent stopServiceIntent = new Intent();
-        stopServiceIntent.setAction(AudioPlayService.STOP_SERVICE);
-        PendingIntent stopServicePendingIntent = PendingIntent.getBroadcast(mApp, 0, stopServiceIntent, 0);
-
-        //Check if audio is playing and set the appropriate play/pause button.
-        if (mApp.getService().getMusicPlayer().isPlaying()) {
-            notificationView.setImageViewResource(R.id.notification_base_play, R.mipmap.ic_pause);
-            expNotificationView.setImageViewResource(R.id.notification_expanded_base_play, R.mipmap.ic_pause);
-        } else {
-            notificationView.setImageViewResource(R.id.notification_base_play, R.mipmap.ic_play);
-            expNotificationView.setImageViewResource(R.id.notification_expanded_base_play, R.mipmap.ic_play);
-        }
-
-        //Set the notification content. (设置新标题栏的文字)
-        expNotificationView.setTextViewText(R.id.notification_expanded_base_line_one, songHelper.get().getFileName());
-        expNotificationView.setTextViewText(R.id.notification_expanded_base_line_two, songHelper.get().getFileName());
-        expNotificationView.setTextViewText(R.id.notification_expanded_base_line_three, songHelper.get().getFileName());
-
-        //Set the notification content. (设置标题栏的第一行和第二行文字)
-        notificationView.setTextViewText(R.id.notification_base_line_one, songHelper.get().getFileName());
-        notificationView.setTextViewText(R.id.notification_base_line_two, songHelper.get().getUri());
-
-        //根据不同情况设置不同按钮的图标、可见度、点击事件.
-        if (isOnlySongInQueue()) {
-
-            expNotificationView.setViewVisibility(R.id.notification_expanded_base_next, View.INVISIBLE);
-            expNotificationView.setViewVisibility(R.id.notification_expanded_base_previous, View.INVISIBLE);
-            expNotificationView.setOnClickPendingIntent(R.id.notification_expanded_base_play, playPauseTrackPendingIntent);
-
-            notificationView.setViewVisibility(R.id.notification_base_next, View.INVISIBLE);
-            notificationView.setViewVisibility(R.id.notification_base_previous, View.INVISIBLE);
-            notificationView.setOnClickPendingIntent(R.id.notification_base_play, playPauseTrackPendingIntent);
-        } else if (isFirstSongInQueue()) {
-
-            expNotificationView.setViewVisibility(R.id.notification_expanded_base_previous, View.INVISIBLE);
-            expNotificationView.setViewVisibility(R.id.notification_expanded_base_next, View.VISIBLE);
-            expNotificationView.setOnClickPendingIntent(R.id.notification_expanded_base_play, playPauseTrackPendingIntent);
-            expNotificationView.setOnClickPendingIntent(R.id.notification_expanded_base_next, nextTrackPendingIntent);
-
-            notificationView.setViewVisibility(R.id.notification_base_previous, View.INVISIBLE);
-            notificationView.setViewVisibility(R.id.notification_base_next, View.VISIBLE);
-            notificationView.setOnClickPendingIntent(R.id.notification_base_play, playPauseTrackPendingIntent);
-            notificationView.setOnClickPendingIntent(R.id.notification_base_next, nextTrackPendingIntent);
-        } else if (isLastSongInQueue()) {
-
-            expNotificationView.setViewVisibility(R.id.notification_expanded_base_previous, View.VISIBLE);
-            expNotificationView.setViewVisibility(R.id.notification_expanded_base_next, View.INVISIBLE);
-            expNotificationView.setOnClickPendingIntent(R.id.notification_expanded_base_play, playPauseTrackPendingIntent);
-            expNotificationView.setOnClickPendingIntent(R.id.notification_expanded_base_previous, previousTrackPendingIntent);
-
-            notificationView.setViewVisibility(R.id.notification_base_previous, View.VISIBLE);
-            notificationView.setViewVisibility(R.id.notification_base_next, View.INVISIBLE);
-            notificationView.setOnClickPendingIntent(R.id.notification_base_play, playPauseTrackPendingIntent);
-            notificationView.setOnClickPendingIntent(R.id.notification_base_previous, previousTrackPendingIntent);
-        } else {
-
-            expNotificationView.setViewVisibility(R.id.notification_expanded_base_previous, View.VISIBLE);
-            expNotificationView.setViewVisibility(R.id.notification_expanded_base_next, View.VISIBLE);
-            expNotificationView.setOnClickPendingIntent(R.id.notification_expanded_base_play, playPauseTrackPendingIntent);
-            expNotificationView.setOnClickPendingIntent(R.id.notification_expanded_base_next, nextTrackPendingIntent);
-            expNotificationView.setOnClickPendingIntent(R.id.notification_expanded_base_previous, previousTrackPendingIntent);
-
-            notificationView.setViewVisibility(R.id.notification_base_previous, View.VISIBLE);
-            notificationView.setViewVisibility(R.id.notification_base_next, View.VISIBLE);
-            notificationView.setOnClickPendingIntent(R.id.notification_base_play, playPauseTrackPendingIntent);
-            notificationView.setOnClickPendingIntent(R.id.notification_base_next, nextTrackPendingIntent);
-            notificationView.setOnClickPendingIntent(R.id.notification_base_previous, previousTrackPendingIntent);
-        }
-
-        //Set the "Stop service" pending intents.
-        expNotificationView.setOnClickPendingIntent(R.id.notification_expanded_base_collapse, stopServicePendingIntent);
-        notificationView.setOnClickPendingIntent(R.id.notification_base_collapse, stopServicePendingIntent);
 
 
-        //Attach the shrunken layout to the notification
-        mNotificationBuilder.setContent(notificationView);
-
-        //Build the notification object.
-        Notification notification = mNotificationBuilder.build();
-
-        //Attach the expanded layout th the notification and set its flags.
-        notification.bigContentView = expNotificationView;
-        notification.flags = Notification.FLAG_FOREGROUND_SERVICE | Notification.FLAG_NO_CLEAR | Notification.FLAG_ONGOING_EVENT;
-        return notification;
-    }
-
-    /**
-     * Builds and returns a fully constructed Notification for devices
-     * on Ice Cream Sandwich (APIs 14 & 15).
-     */
-    private Notification buildICSNotification() {
-        mNotificationBuilder = new NotificationCompat.Builder(mApp);
-        mNotificationBuilder.setOngoing(true); //设置为一个正在进行的通知。通常是用来表示一个后台任务,用户积极参与(如播放音乐)或以某种方式正在等待,因此占用设备(如一个文件下载,同步操作,主动网络连接)
-        mNotificationBuilder.setAutoCancel(false);
-        mNotificationBuilder.setSmallIcon(R.mipmap.ic_launcher);
-
-        //Open up the player screen when the user taps on the notification.
-        Intent launchNowPlayingIntent = new Intent();
-        launchNowPlayingIntent.setAction(AudioPlayService.LAUNCH_NOW_PLAYING_ACTION);
-        PendingIntent launchNowPlayingPendingIntent = PendingIntent.getBroadcast(mApp, 0, launchNowPlayingIntent, 0);
-        mNotificationBuilder.setContentIntent(launchNowPlayingPendingIntent);
-
-        //Grab the notification layout
-        RemoteViews notificationView = new RemoteViews(getPackageName(), R.layout.notification_custom_layout);
-
-        //Initialize the notification layout buttons.
-        Intent previousTrackIntent = new Intent();
-        previousTrackIntent.setAction(AudioPlayService.PREVIOUS_ACTION);
-        PendingIntent previousTrackPendingIntent = PendingIntent.getBroadcast(mApp, 0, previousTrackIntent, 0);
-
-        Intent playPauseTrackIntent = new Intent();
-        playPauseTrackIntent.setAction(AudioPlayService.PLAY_PAUSE_ACTION);
-        PendingIntent playPauseTrackPendingIntent = PendingIntent.getBroadcast(mApp, 0, playPauseTrackIntent, 0);
-
-        Intent nextTrackIntent = new Intent();
-        nextTrackIntent.setAction(AudioPlayService.NEXT_ACTION);
-        PendingIntent nextTrackPendingIntent = PendingIntent.getBroadcast(mApp, 0, nextTrackIntent, 0);
-
-        Intent stopServiceIntent = new Intent();
-        stopServiceIntent.setAction(AudioPlayService.STOP_SERVICE);
-        PendingIntent stopServicePendingIntent = PendingIntent.getBroadcast(mApp, 0, stopServiceIntent, 0);
-
-        //Check if audio is playing and set the appropriate play/pause button.
-        if (mApp.getService().getMusicPlayer().isPlaying()) {
-            notificationView.setImageViewResource(R.id.notification_base_play, R.mipmap.ic_pause);
-        } else {
-            notificationView.setImageViewResource(R.id.notification_base_play, R.mipmap.ic_play);
-        }
-
-        //Set the notification content. (设置标题栏的第一行和第二行文字)
-        notificationView.setTextViewText(R.id.notification_base_line_one, songHelper.get().getFileName());
-        notificationView.setTextViewText(R.id.notification_base_line_two, songHelper.get().getUri());
-
-        //根据不同情况设置不同按钮的图标、可见度、点击事件.
-        if (isOnlySongInQueue()) {
-            notificationView.setViewVisibility(R.id.notification_base_next, View.INVISIBLE);
-            notificationView.setViewVisibility(R.id.notification_base_previous, View.INVISIBLE);
-            notificationView.setOnClickPendingIntent(R.id.notification_base_play, playPauseTrackPendingIntent);
-        } else if (isFirstSongInQueue()) {
-            notificationView.setViewVisibility(R.id.notification_base_previous, View.INVISIBLE);
-            notificationView.setViewVisibility(R.id.notification_base_next, View.VISIBLE);
-            notificationView.setOnClickPendingIntent(R.id.notification_base_play, playPauseTrackPendingIntent);
-            notificationView.setOnClickPendingIntent(R.id.notification_base_next, nextTrackPendingIntent);
-        } else if (isLastSongInQueue()) {
-            notificationView.setViewVisibility(R.id.notification_base_previous, View.VISIBLE);
-            notificationView.setViewVisibility(R.id.notification_base_next, View.INVISIBLE);
-            notificationView.setOnClickPendingIntent(R.id.notification_base_play, playPauseTrackPendingIntent);
-            notificationView.setOnClickPendingIntent(R.id.notification_base_previous, previousTrackPendingIntent);
-        } else {
-            notificationView.setViewVisibility(R.id.notification_base_previous, View.VISIBLE);
-            notificationView.setViewVisibility(R.id.notification_base_next, View.VISIBLE);
-            notificationView.setOnClickPendingIntent(R.id.notification_base_play, playPauseTrackPendingIntent);
-            notificationView.setOnClickPendingIntent(R.id.notification_base_next, nextTrackPendingIntent);
-            notificationView.setOnClickPendingIntent(R.id.notification_base_previous, previousTrackPendingIntent);
-        }
-
-        //Set the "Stop Service" pending intent.
-        notificationView.setOnClickPendingIntent(R.id.notification_base_collapse, stopServicePendingIntent);
-
-        //Attach the shrunken layout to the notification.
-        mNotificationBuilder.setContent(notificationView);
-
-        //Build the notification object and set its flags
-        Notification notification = mNotificationBuilder.build();
-        notification.flags = Notification.FLAG_FOREGROUND_SERVICE | Notification.FLAG_NO_CLEAR | Notification.FLAG_ONGOING_EVENT;
-
-        return notification;
-    }
 
     public class MyBinder extends Binder {
         public AudioPlayService getService() {
@@ -493,4 +279,216 @@ public class AudioPlayService extends ServiceBase {
         }
     }
 
+    private class NotificationBuilder {
+        Notification buildNotification() {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                return buildJBNotification();
+            } else {
+                return buildICSNotification();
+            }
+        }
+
+        /**
+         * version code >= 16
+         */
+        @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
+        //@SuppressLint("NewApi")
+        private Notification buildJBNotification() {
+            mNotificationBuilder = new NotificationCompat.Builder(mApp);
+            mNotificationBuilder.setOngoing(true); //设置为一个正在进行的通知。通常是用来表示一个后台任务,用户积极参与(如播放音乐)或以某种方式正在等待,因此占用设备(如一个文件下载,同步操作,主动网络连接)
+            mNotificationBuilder.setAutoCancel(false);
+            mNotificationBuilder.setSmallIcon(R.mipmap.ic_launcher);
+
+            //Open up the player screen when the user taps on the notification.
+            Intent launchNowPlayingIntent = new Intent();
+            launchNowPlayingIntent.setAction(AudioPlayService.LAUNCH_NOW_PLAYING_ACTION);
+            PendingIntent launchNowPlayingPendingIntent = PendingIntent.getBroadcast(mApp, 0, launchNowPlayingIntent, 0);
+            mNotificationBuilder.setContentIntent(launchNowPlayingPendingIntent);
+
+            //Grab the notification layouts.
+            RemoteViews notificationView = new RemoteViews(getPackageName(), R.layout.notification_custom_layout);
+            RemoteViews expNotificationView = new RemoteViews(getPackageName(), R.layout.notification_custom_expanded_layout);
+
+            //Initialize the notification layout buttons.
+            Intent previousTrackIntent = new Intent();
+            previousTrackIntent.setAction(AudioPlayService.PREVIOUS_ACTION);
+            PendingIntent previousTrackPendingIntent = PendingIntent.getBroadcast(mApp, 0, previousTrackIntent, 0);
+
+            Intent playPauseTrackIntent = new Intent();
+            playPauseTrackIntent.setAction(AudioPlayService.PLAY_PAUSE_ACTION);
+            PendingIntent playPauseTrackPendingIntent = PendingIntent.getBroadcast(mApp, 0, playPauseTrackIntent, 0);
+
+            Intent nextTrackIntent = new Intent();
+            nextTrackIntent.setAction(AudioPlayService.NEXT_ACTION);
+            PendingIntent nextTrackPendingIntent = PendingIntent.getBroadcast(mApp, 0, nextTrackIntent, 0);
+
+            Intent stopServiceIntent = new Intent();
+            stopServiceIntent.setAction(AudioPlayService.STOP_SERVICE);
+            PendingIntent stopServicePendingIntent = PendingIntent.getBroadcast(mApp, 0, stopServiceIntent, 0);
+
+            //Check if audio is playing and set the appropriate play/pause button.
+            if (mApp.getService().getMusicPlayer().isPlaying()) {
+                notificationView.setImageViewResource(R.id.notification_base_play, R.mipmap.ic_pause);
+                expNotificationView.setImageViewResource(R.id.notification_expanded_base_play, R.mipmap.ic_pause);
+            } else {
+                notificationView.setImageViewResource(R.id.notification_base_play, R.mipmap.ic_play);
+                expNotificationView.setImageViewResource(R.id.notification_expanded_base_play, R.mipmap.ic_play);
+            }
+
+            //Set the notification content. (设置新标题栏的文字)
+            expNotificationView.setTextViewText(R.id.notification_expanded_base_line_one, songHelper.get().getFileName());
+            expNotificationView.setTextViewText(R.id.notification_expanded_base_line_two, songHelper.get().getFileName());
+            expNotificationView.setTextViewText(R.id.notification_expanded_base_line_three, songHelper.get().getFileName());
+
+            //Set the notification content. (设置标题栏的第一行和第二行文字)
+            notificationView.setTextViewText(R.id.notification_base_line_one, songHelper.get().getFileName());
+            notificationView.setTextViewText(R.id.notification_base_line_two, songHelper.get().getUri());
+
+            //根据不同情况设置不同按钮的图标、可见度、点击事件.
+            if (songHelper.isOnlySongInQueue()) {
+
+                expNotificationView.setViewVisibility(R.id.notification_expanded_base_next, View.INVISIBLE);
+                expNotificationView.setViewVisibility(R.id.notification_expanded_base_previous, View.INVISIBLE);
+                expNotificationView.setOnClickPendingIntent(R.id.notification_expanded_base_play, playPauseTrackPendingIntent);
+
+                notificationView.setViewVisibility(R.id.notification_base_next, View.INVISIBLE);
+                notificationView.setViewVisibility(R.id.notification_base_previous, View.INVISIBLE);
+                notificationView.setOnClickPendingIntent(R.id.notification_base_play, playPauseTrackPendingIntent);
+            } else if (songHelper.isFirstSongInQueue()) {
+
+                expNotificationView.setViewVisibility(R.id.notification_expanded_base_previous, View.INVISIBLE);
+                expNotificationView.setViewVisibility(R.id.notification_expanded_base_next, View.VISIBLE);
+                expNotificationView.setOnClickPendingIntent(R.id.notification_expanded_base_play, playPauseTrackPendingIntent);
+                expNotificationView.setOnClickPendingIntent(R.id.notification_expanded_base_next, nextTrackPendingIntent);
+
+                notificationView.setViewVisibility(R.id.notification_base_previous, View.INVISIBLE);
+                notificationView.setViewVisibility(R.id.notification_base_next, View.VISIBLE);
+                notificationView.setOnClickPendingIntent(R.id.notification_base_play, playPauseTrackPendingIntent);
+                notificationView.setOnClickPendingIntent(R.id.notification_base_next, nextTrackPendingIntent);
+            } else if (songHelper.isLastSongInQueue()) {
+
+                expNotificationView.setViewVisibility(R.id.notification_expanded_base_previous, View.VISIBLE);
+                expNotificationView.setViewVisibility(R.id.notification_expanded_base_next, View.INVISIBLE);
+                expNotificationView.setOnClickPendingIntent(R.id.notification_expanded_base_play, playPauseTrackPendingIntent);
+                expNotificationView.setOnClickPendingIntent(R.id.notification_expanded_base_previous, previousTrackPendingIntent);
+
+                notificationView.setViewVisibility(R.id.notification_base_previous, View.VISIBLE);
+                notificationView.setViewVisibility(R.id.notification_base_next, View.INVISIBLE);
+                notificationView.setOnClickPendingIntent(R.id.notification_base_play, playPauseTrackPendingIntent);
+                notificationView.setOnClickPendingIntent(R.id.notification_base_previous, previousTrackPendingIntent);
+            } else {
+
+                expNotificationView.setViewVisibility(R.id.notification_expanded_base_previous, View.VISIBLE);
+                expNotificationView.setViewVisibility(R.id.notification_expanded_base_next, View.VISIBLE);
+                expNotificationView.setOnClickPendingIntent(R.id.notification_expanded_base_play, playPauseTrackPendingIntent);
+                expNotificationView.setOnClickPendingIntent(R.id.notification_expanded_base_next, nextTrackPendingIntent);
+                expNotificationView.setOnClickPendingIntent(R.id.notification_expanded_base_previous, previousTrackPendingIntent);
+
+                notificationView.setViewVisibility(R.id.notification_base_previous, View.VISIBLE);
+                notificationView.setViewVisibility(R.id.notification_base_next, View.VISIBLE);
+                notificationView.setOnClickPendingIntent(R.id.notification_base_play, playPauseTrackPendingIntent);
+                notificationView.setOnClickPendingIntent(R.id.notification_base_next, nextTrackPendingIntent);
+                notificationView.setOnClickPendingIntent(R.id.notification_base_previous, previousTrackPendingIntent);
+            }
+
+            //Set the "Stop service" pending intents.
+            expNotificationView.setOnClickPendingIntent(R.id.notification_expanded_base_collapse, stopServicePendingIntent);
+            notificationView.setOnClickPendingIntent(R.id.notification_base_collapse, stopServicePendingIntent);
+
+
+            //Attach the shrunken layout to the notification
+            mNotificationBuilder.setContent(notificationView);
+
+            //Build the notification object.
+            Notification notification = mNotificationBuilder.build();
+
+            //Attach the expanded layout th the notification and set its flags.
+            notification.bigContentView = expNotificationView;
+            notification.flags = Notification.FLAG_FOREGROUND_SERVICE | Notification.FLAG_NO_CLEAR | Notification.FLAG_ONGOING_EVENT;
+            return notification;
+        }
+
+        /**
+         * Builds and returns a fully constructed Notification for devices
+         * on Ice Cream Sandwich (APIs 14 & 15).
+         */
+        private Notification buildICSNotification() {
+            mNotificationBuilder = new NotificationCompat.Builder(mApp);
+            mNotificationBuilder.setOngoing(true); //设置为一个正在进行的通知。通常是用来表示一个后台任务,用户积极参与(如播放音乐)或以某种方式正在等待,因此占用设备(如一个文件下载,同步操作,主动网络连接)
+            mNotificationBuilder.setAutoCancel(false);
+            mNotificationBuilder.setSmallIcon(R.mipmap.ic_launcher);
+
+            //Open up the player screen when the user taps on the notification.
+            Intent launchNowPlayingIntent = new Intent();
+            launchNowPlayingIntent.setAction(AudioPlayService.LAUNCH_NOW_PLAYING_ACTION);
+            PendingIntent launchNowPlayingPendingIntent = PendingIntent.getBroadcast(mApp, 0, launchNowPlayingIntent, 0);
+            mNotificationBuilder.setContentIntent(launchNowPlayingPendingIntent);
+
+            //Grab the notification layout
+            RemoteViews notificationView = new RemoteViews(getPackageName(), R.layout.notification_custom_layout);
+
+            //Initialize the notification layout buttons.
+            Intent previousTrackIntent = new Intent();
+            previousTrackIntent.setAction(AudioPlayService.PREVIOUS_ACTION);
+            PendingIntent previousTrackPendingIntent = PendingIntent.getBroadcast(mApp, 0, previousTrackIntent, 0);
+
+            Intent playPauseTrackIntent = new Intent();
+            playPauseTrackIntent.setAction(AudioPlayService.PLAY_PAUSE_ACTION);
+            PendingIntent playPauseTrackPendingIntent = PendingIntent.getBroadcast(mApp, 0, playPauseTrackIntent, 0);
+
+            Intent nextTrackIntent = new Intent();
+            nextTrackIntent.setAction(AudioPlayService.NEXT_ACTION);
+            PendingIntent nextTrackPendingIntent = PendingIntent.getBroadcast(mApp, 0, nextTrackIntent, 0);
+
+            Intent stopServiceIntent = new Intent();
+            stopServiceIntent.setAction(AudioPlayService.STOP_SERVICE);
+            PendingIntent stopServicePendingIntent = PendingIntent.getBroadcast(mApp, 0, stopServiceIntent, 0);
+
+            //Check if audio is playing and set the appropriate play/pause button.
+            if (mApp.getService().getMusicPlayer().isPlaying()) {
+                notificationView.setImageViewResource(R.id.notification_base_play, R.mipmap.ic_pause);
+            } else {
+                notificationView.setImageViewResource(R.id.notification_base_play, R.mipmap.ic_play);
+            }
+
+            //Set the notification content. (设置标题栏的第一行和第二行文字)
+            notificationView.setTextViewText(R.id.notification_base_line_one, songHelper.get().getFileName());
+            notificationView.setTextViewText(R.id.notification_base_line_two, songHelper.get().getUri());
+
+            //根据不同情况设置不同按钮的图标、可见度、点击事件.
+            if (songHelper.isOnlySongInQueue()) {
+                notificationView.setViewVisibility(R.id.notification_base_next, View.INVISIBLE);
+                notificationView.setViewVisibility(R.id.notification_base_previous, View.INVISIBLE);
+                notificationView.setOnClickPendingIntent(R.id.notification_base_play, playPauseTrackPendingIntent);
+            } else if (songHelper.isFirstSongInQueue()) {
+                notificationView.setViewVisibility(R.id.notification_base_previous, View.INVISIBLE);
+                notificationView.setViewVisibility(R.id.notification_base_next, View.VISIBLE);
+                notificationView.setOnClickPendingIntent(R.id.notification_base_play, playPauseTrackPendingIntent);
+                notificationView.setOnClickPendingIntent(R.id.notification_base_next, nextTrackPendingIntent);
+            } else if (songHelper.isLastSongInQueue()) {
+                notificationView.setViewVisibility(R.id.notification_base_previous, View.VISIBLE);
+                notificationView.setViewVisibility(R.id.notification_base_next, View.INVISIBLE);
+                notificationView.setOnClickPendingIntent(R.id.notification_base_play, playPauseTrackPendingIntent);
+                notificationView.setOnClickPendingIntent(R.id.notification_base_previous, previousTrackPendingIntent);
+            } else {
+                notificationView.setViewVisibility(R.id.notification_base_previous, View.VISIBLE);
+                notificationView.setViewVisibility(R.id.notification_base_next, View.VISIBLE);
+                notificationView.setOnClickPendingIntent(R.id.notification_base_play, playPauseTrackPendingIntent);
+                notificationView.setOnClickPendingIntent(R.id.notification_base_next, nextTrackPendingIntent);
+                notificationView.setOnClickPendingIntent(R.id.notification_base_previous, previousTrackPendingIntent);
+            }
+
+            //Set the "Stop Service" pending intent.
+            notificationView.setOnClickPendingIntent(R.id.notification_base_collapse, stopServicePendingIntent);
+
+            //Attach the shrunken layout to the notification.
+            mNotificationBuilder.setContent(notificationView);
+
+            //Build the notification object and set its flags
+            Notification notification = mNotificationBuilder.build();
+            notification.flags = Notification.FLAG_FOREGROUND_SERVICE | Notification.FLAG_NO_CLEAR | Notification.FLAG_ONGOING_EVENT;
+
+            return notification;
+        }
+    }
 }
