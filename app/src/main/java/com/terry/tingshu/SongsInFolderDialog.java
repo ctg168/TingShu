@@ -57,7 +57,6 @@ public class SongsInFolderDialog extends DialogFragmentBase {
             @Override
             public void onItemClick(View view, int position) {
                 dismiss();
-                // TODO: 2017/3/14 send broadcast to play a song.
                 mApp.getGlobalSongManager().initByList(mSongList, position);
                 mApp.sendBroadcast_PLAY();
             }
