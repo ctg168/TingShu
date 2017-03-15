@@ -58,7 +58,7 @@ public class FolderListFragment extends FragmentBase {
             @Override
             public void onItemClick(View view, int position) {
 //                Intent intent = new Intent(getContext(), SongListActivity.class);
-//                intent.putExtra("path", fileDict.keys().get(position));
+//                intent.putExtra("path", fileDict.keys().getCurrent(position));
 //                startActivity(intent);
                 SongsInFolderDialog dialog = new SongsInFolderDialog();
                 dialog.setFolderPath(fileDict.keys().get(position));

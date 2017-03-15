@@ -56,13 +56,10 @@ public class SongsInFolderDialog extends DialogFragmentBase {
         adapter.setOnItemClickListener(new SongAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(View view, int position) {
-                // mApp.getService().playSong(songManager.getSongList().get(position));
-                // TODO: 2017/3/14 send broadcast to play a song.
-                Song selectedSong = mSongList.get(position);
-
-
-
                 dismiss();
+                // TODO: 2017/3/14 send broadcast to play a song.
+                mApp.getGlobalSongManager().initByList(mSongList, position);
+                mApp.sendBroadcast_PLAY();
             }
         });
         songsView.setAdapter(adapter);

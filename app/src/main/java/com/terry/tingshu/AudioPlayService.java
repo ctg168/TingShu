@@ -130,27 +130,13 @@ public class AudioPlayService extends ServiceBase {
                 localBroadcastManager.sendBroadcast(intent);
 
                 if (isFirstRun) {
-                    mPlayer.start();
-                    mPlayer.seekTo(globalSongManager.get().getLastPlayPosition());
-
                     isFirstRun = false;
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            while (mPlayer.isPlaying()) {
-                                try {
-                                    Thread.sleep(1000);
-                                    Intent intent = new Intent(SystemConst.ACTION_MUSIC_SERVICE_INFO);
-                                    intent.putExtra(SystemConst.EXTRA_KEY_CURRENT_POSITION, mPlayer.getCurrentPosition());
-                                    localBroadcastManager.sendBroadcast(intent);
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-
-                            }
-                        }
-                    }).start();
                 }
+
+                mPlayer.start();
+                mPlayer.seekTo(globalSongManager.getCurrent().getLastPlayPosition());
+
+
             }
         };
 
@@ -225,7 +211,7 @@ public class AudioPlayService extends ServiceBase {
             localBroadcastManager.sendBroadcast(intent);
             //endregion
 
-            String lastUrl = globalSongManager.get().getFilePath();
+            String lastUrl = globalSongManager.getCurrent().getFilePath();
             int lastPos = mPlayer.getCurrentPosition();
 
             mApp.getSharedPreferences().edit().putString(SystemConst.KEY_LAST_SONG_URL, lastUrl).apply();
@@ -235,19 +221,19 @@ public class AudioPlayService extends ServiceBase {
 
     private void playerStart() {
         //启动播放有以下可能：继续播放，点击一首歌曲播放.统一由SongManager来控制.
-        preparePlayer(globalSongManager.getLastSong());
-
+        //preparePlayer(globalSongManager.getLastSavedSong());
+        preparePlayer(globalSongManager.getCurrent());
     }
 
     private void playerPrevious() {
         if (globalSongManager.movePrevious()) {
-            playSong(globalSongManager.get());
+            playSong(globalSongManager.getCurrent());
         }
     }
 
     private void playerNext() {
         if (globalSongManager.moveNext()) {
-            playSong(globalSongManager.get());
+            playSong(globalSongManager.getCurrent());
         }
     }
 
@@ -327,13 +313,13 @@ public class AudioPlayService extends ServiceBase {
             }
 
             //Set the notification content. (设置新标题栏的文字)
-            expNotificationView.setTextViewText(R.id.notification_expanded_base_line_one, globalSongManager.get().getFileName());
-            expNotificationView.setTextViewText(R.id.notification_expanded_base_line_two, globalSongManager.get().getFileName());
-            expNotificationView.setTextViewText(R.id.notification_expanded_base_line_three, globalSongManager.get().getFileName());
+            expNotificationView.setTextViewText(R.id.notification_expanded_base_line_one, globalSongManager.getCurrent().getFileName());
+            expNotificationView.setTextViewText(R.id.notification_expanded_base_line_two, globalSongManager.getCurrent().getFileName());
+            expNotificationView.setTextViewText(R.id.notification_expanded_base_line_three, globalSongManager.getCurrent().getFileName());
 
             //Set the notification content. (设置标题栏的第一行和第二行文字)
-            notificationView.setTextViewText(R.id.notification_base_line_one, globalSongManager.get().getFileName());
-            notificationView.setTextViewText(R.id.notification_base_line_two, globalSongManager.get().getFilePath());
+            notificationView.setTextViewText(R.id.notification_base_line_one, globalSongManager.getCurrent().getFileName());
+            notificationView.setTextViewText(R.id.notification_base_line_two, globalSongManager.getCurrent().getFilePath());
 
             //根据不同情况设置不同按钮的图标、可见度、点击事件.
             if (globalSongManager.isOnlySongInQueue()) {
@@ -443,8 +429,8 @@ public class AudioPlayService extends ServiceBase {
             }
 
             //Set the notification content. (设置标题栏的第一行和第二行文字)
-            notificationView.setTextViewText(R.id.notification_base_line_one, globalSongManager.get().getFileName());
-            notificationView.setTextViewText(R.id.notification_base_line_two, globalSongManager.get().getFilePath());
+            notificationView.setTextViewText(R.id.notification_base_line_one, globalSongManager.getCurrent().getFileName());
+            notificationView.setTextViewText(R.id.notification_base_line_two, globalSongManager.getCurrent().getFilePath());
 
             //根据不同情况设置不同按钮的图标、可见度、点击事件.
             if (globalSongManager.isOnlySongInQueue()) {

@@ -5,12 +5,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Environment;
+import android.support.v4.content.LocalBroadcastManager;
 
 import com.joanzapata.iconify.Iconify;
 import com.joanzapata.iconify.fonts.FontAwesomeModule;
 import com.joanzapata.iconify.fonts.MaterialModule;
 import com.terry.tingshu.AudioPlayService;
 import com.terry.tingshu.GlobalSongManager;
+import com.terry.tingshu.SystemConst;
 
 import java.io.File;
 
@@ -19,6 +21,8 @@ import static android.os.Environment.getExternalStoragePublicDirectory;
 public class JetApplication extends Application {
 
     private GlobalSongManager globalSongManager;
+
+    private LocalBroadcastManager localBroadcastManager;
 
     public AudioPlayService getService() {
         return mService;
@@ -48,6 +52,9 @@ public class JetApplication extends Application {
         //SharedReferences.
         mSharedPreferences = this.getSharedPreferences(getPackageName(), Context.MODE_PRIVATE);
 
+        localBroadcastManager = LocalBroadcastManager.getInstance(this);
+        globalSongManager = GlobalSongManager.getInstance(this);
+
         Init();
     }
 
@@ -57,8 +64,6 @@ public class JetApplication extends Application {
         Iconify.with(new FontAwesomeModule())
                 .with(new MaterialModule());
 
-        initSongManager();
-
         initService();
     }
 
@@ -67,13 +72,41 @@ public class JetApplication extends Application {
         startService(startIntent);
     }
 
-    private void initSongManager() {
-        globalSongManager = new GlobalSongManager(this);
-    }
 
     private void initImageLoader(Context context) {
 
     }
+
+    public void sendBroadcast_PLAY() {
+        Intent intent = new Intent(SystemConst.ACTION_PLAYER_CONTROL);
+        intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROL, SystemConst.PLAYER_PLAY);
+        localBroadcastManager.sendBroadcastSync(intent);
+    }
+
+    public void sendBroadcast_PAUSE() {
+        Intent intent = new Intent(SystemConst.ACTION_PLAYER_CONTROL);
+        intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROL, SystemConst.PLAYER_PAUSE);
+        localBroadcastManager.sendBroadcastSync(intent);
+    }
+
+    public void sendBroadcast_NEXT() {
+        Intent intent = new Intent(SystemConst.ACTION_PLAYER_CONTROL);
+        intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROL, SystemConst.PLAYER_NEXT);
+        localBroadcastManager.sendBroadcastSync(intent);
+    }
+
+    public void sendBroadcast_PREVIOUS() {
+        Intent intent = new Intent(SystemConst.ACTION_PLAYER_CONTROL);
+        intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROL, SystemConst.PLAYER_PREVIOUS);
+        localBroadcastManager.sendBroadcastSync(intent);
+    }
+
+    public void sendBroadcast_CURRENT_POSITION() {
+        Intent intent = new Intent(SystemConst.ACTION_MUSIC_SERVICE_INFO);
+        intent.putExtra(SystemConst.EXTRA_KEY_CURRENT_POSITION, mService.getMusicPlayer().getCurrentPosition());
+        localBroadcastManager.sendBroadcast(intent);
+    }
+
 
     public SharedPreferences getSharedPreferences() {
         return mSharedPreferences;

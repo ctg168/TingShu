@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.view.LayoutInflater;
@@ -19,6 +21,8 @@ import com.terry.tingshu.core.FragmentBase;
 
 import java.util.Formatter;
 import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class PlayerControllerFragment extends FragmentBase implements View.OnClickListener {
 
@@ -40,7 +44,10 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
     StringBuilder mFormatBuilder;
     Formatter mFormatter;
 
-    LocalBroadcastManager localBroadcastManager;
+    Timer timer;
+    MyHandler myHandler;
+
+    private LocalBroadcastManager localBroadcastManager;
 
     @Nullable
     @Override
@@ -67,25 +74,22 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
         progressBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                audioPlayService.getMusicPlayer().seekTo(progressBar.getProgress());
+                if (fromUser) {
+                    audioPlayService.getMusicPlayer().seekTo(progress);
+                }
             }
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
                 if (audioPlayService.getMusicPlayer().isPlaying()) {
-                    Intent intent = new Intent(SystemConst.ACTION_PLAYER_CONTROL);
-                    intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROL, SystemConst.PLAYER_PAUSE);
-                    localBroadcastManager.sendBroadcastSync(intent);
+                    mApp.sendBroadcast_PAUSE();
                 }
-
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 if (!audioPlayService.getMusicPlayer().isPlaying()) {
-                    Intent intent = new Intent(SystemConst.ACTION_PLAYER_CONTROL);
-                    intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROL, SystemConst.PLAYER_PLAY);
-                    localBroadcastManager.sendBroadcastSync(intent);
+                    mApp.sendBroadcast_PLAY();
                 }
             }
         });
@@ -99,6 +103,7 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
         mFormatBuilder = new StringBuilder();
         mFormatter = new Formatter(mFormatBuilder, Locale.getDefault());
 
+        myHandler = new MyHandler();
         init();
         return view;
     }
@@ -114,7 +119,7 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
             public void onReceive(Context context, Intent intent) {
                 if (intent.getAction() != null && intent.getAction().equals(SystemConst.ACTION_MUSIC_SERVICE_INFO)) {
                     int control = intent.getIntExtra(SystemConst.EXTRA_KEY_PLAYER_INFO, -1);
-                    if (control >= 0) {
+                    if (control == SystemConst.INFO_PLAYER_PLAYING) { //如果正在播放.
                         int duration = audioPlayService.getMusicPlayer().getDuration();
                         tvCurrentPosition.setText(stringForTime(0));
                         tvDuration.setText(stringForTime(duration));
@@ -123,17 +128,31 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
 
                         if (audioPlayService.getMusicPlayer().isPlaying()) {
                             btnPlayerPlay.setText(getString(R.string.player_pause));
+
+                            timer = new Timer();
+                            timer.schedule(new TimerTask() {
+                                @Override
+                                public void run() {
+
+                                    myHandler.sendEmptyMessage(0);
+                                }
+                            }, 0, 500);
+
                         } else {
                             btnPlayerPlay.setText(getString(R.string.player_play));
+                            timer.purge();
                         }
+
+
+                    } else { //如果是暂停.
+                        System.out.println("PlayerControllerFragment.onReceive");
                     }
 
-                    int pos = intent.getIntExtra(SystemConst.EXTRA_KEY_CURRENT_POSITION, -1);
-                    if (pos >= 0) {
-                        progressBar.setProgress(pos);
-                        tvCurrentPosition.setText(stringForTime(pos));
-                    }
-
+//                    int pos = intent.getIntExtra(SystemConst.EXTRA_KEY_CURRENT_POSITION, -1);
+//                    if (pos >= 0) {
+//                        progressBar.setProgress(pos);
+//                        tvCurrentPosition.setText(stringForTime(pos));
+//                    }
                 }
 
             }
@@ -142,20 +161,19 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
 
     @Override
     public void onClick(View v) {
-        Intent intent = new Intent(SystemConst.ACTION_PLAYER_CONTROL);
         switch (v.getId()) {
             case R.id.btn_player_play:
                 if (audioPlayService.getMusicPlayer().isPlaying()) {
-                    intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROL, SystemConst.PLAYER_PAUSE);
+                    mApp.sendBroadcast_PAUSE();
                 } else {
-                    intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROL, SystemConst.PLAYER_PLAY);
+                    mApp.sendBroadcast_PLAY();
                 }
                 break;
             case R.id.btn_player_previous:
-                intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROL, SystemConst.PLAYER_PREVIOUS);
+                mApp.sendBroadcast_PREVIOUS();
                 break;
             case R.id.btn_player_next:
-                intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROL, SystemConst.PLAYER_NEXT);
+                mApp.sendBroadcast_NEXT();
                 break;
             case R.id.btn_player_list:
                 showPlayList();
@@ -164,8 +182,8 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
                 showAutoStopDialog();
                 break;
         }
-        localBroadcastManager.sendBroadcastSync(intent);
     }
+
 
     private void showAutoStopDialog() {
         AutoStopDialog dialog = new AutoStopDialog();
@@ -192,5 +210,14 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
         }
     }
 
+    class MyHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            int currentPosition = audioPlayService.getMusicPlayer().getCurrentPosition();
+            progressBar.setProgress(currentPosition);
+            tvCurrentPosition.setText(stringForTime(currentPosition));
+        }
+    }
 
 }
