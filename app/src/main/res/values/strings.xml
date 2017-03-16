@@ -7,8 +7,8 @@
     <string name="dummy_title">第二回 史大郎夜走华阴县　鲁提辖拳打镇关西</string>
 
     <string name="icon_music">{fa-music 40sp}</string>
-    <string name="player_play">{fa-play-circle-o 40sp}</string>
-    <string name="player_pause">{fa-pause-circle-o 40sp}</string>
+    <string name="player_play">{fa-play-circle-o}</string>
+    <string name="player_pause">{fa-pause-circle-o}</string>
     <string name="player_next">{fa-step-forward 20sp}</string>
     <string name="player_previous">{fa-step-backward 20sp}</string>
     <string name="player_list">{fa-list 20sp}</string>

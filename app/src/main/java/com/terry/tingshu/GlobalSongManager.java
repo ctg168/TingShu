@@ -36,7 +36,15 @@ public class GlobalSongManager {
     //endregion
 
     public Song getLastSavedSong() {
+        String lastUri = mApp.getSharedPreferences().getString(SystemConst.KEY_LAST_SONG_URL, "");
+        int lastPos = mApp.getSharedPreferences().getInt(SystemConst.KEY_LAST_SONG_POS, 0);
 
+        Song lastSong = SongHelper.resolveLocalSongFile(new File(lastUri));
+        if (lastSong != null) {
+            lastSong.setLastPlayPosition(lastPos);
+            initBySong(lastSong);
+            return lastSong;
+        }
         return null;
     }
 

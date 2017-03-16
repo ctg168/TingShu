@@ -53,12 +53,13 @@
 
         <com.joanzapata.iconify.widget.IconTextView
             android:id="@+id/btn_player_play"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
             android:layout_centerVertical="true"
             android:layout_marginLeft="10dp"
             android:layout_toRightOf="@id/btn_player_previous"
             android:gravity="center"
+            android:textSize="78sp"
             android:text="@string/player_play" />
 
         <com.joanzapata.iconify.widget.IconTextView

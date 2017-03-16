@@ -22,7 +22,9 @@ import android.widget.RemoteViews;
 import com.terry.tingshu.core.JetApplication;
 import com.terry.tingshu.core.ServiceBase;
 import com.terry.tingshu.entity.Song;
+import com.terry.tingshu.helpers.SongHelper;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -199,34 +201,27 @@ public class AudioPlayService extends ServiceBase {
     }
 
     private void playerPause() {
-        if (mPlayer != null && mPlayer.isPlaying()) {
-            mPlayer.pause();
+        mPlayer.pause();
 
-            //region send pause broadcast
-            Intent intent = new Intent(SystemConst.ACTION_MUSIC_SERVICE_INFO);
-            intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_INFO, SystemConst.INFO_PLAYER_PAUSE);
-            localBroadcastManager.sendBroadcast(intent);
-            //endregion
+        Song song = globalSongManager.getCurrent();
+        int lastPos = mPlayer.getCurrentPosition();
+        song.setLastPlayPosition(lastPos);
+        mApp.getSharedPreferences().edit().putString(SystemConst.KEY_LAST_SONG_URL, song.getFilePath()).apply();
+        mApp.getSharedPreferences().edit().putInt(SystemConst.KEY_LAST_SONG_POS, lastPos).apply();
 
-            String lastUrl = globalSongManager.getCurrent().getFilePath();
-            int lastPos = mPlayer.getCurrentPosition();
-
-            //TODO:暂停时，记下当前歌曲播放的位置.
-            mApp.getSharedPreferences().edit().putString(SystemConst.KEY_LAST_SONG_URL, lastUrl).apply();
-            mApp.getSharedPreferences().edit().putInt(SystemConst.KEY_LAST_SONG_POS, lastPos).apply();
-        }
+        mApp.sendInfoBroadcast_PAUSE();
     }
 
     private void playerStart() {
-        //启动播放有以下可能：继续播放，点击一首歌曲播放.统一由SongManager来控制.
-        //preparePlayer(globalSongManager.getLastSavedSong());
-        String lastUri = mApp.getSharedPreferences().getString(SystemConst.KEY_LAST_SONG_URL, "");
-        int currentPos = mApp.getSharedPreferences().getInt(SystemConst.KEY_LAST_SONG_POS, 0);
+        /**
+         * 收到开始播放的消息，有2中情况：继续播放，开始播放某一首歌.
+         */
         Song song = globalSongManager.getCurrent();
-        if (song.getFilePath().equals(lastUri)) {
-            song.setLastPlayPosition(currentPos);
+        if (song == null) {
+            song = globalSongManager.getLastSavedSong();
         }
-        preparePlayer(song);
+        if (song != null)
+            preparePlayer(song);
     }
 
     private void playerPrevious() {

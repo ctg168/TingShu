@@ -101,6 +101,15 @@ public class JetApplication extends Application {
         localBroadcastManager.sendBroadcastSync(intent);
     }
 
+    public void sendInfoBroadcast_PAUSE(){
+        //region send pause broadcast
+        Intent intent = new Intent(SystemConst.ACTION_MUSIC_SERVICE_INFO);
+        intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_INFO, SystemConst.INFO_PLAYER_PAUSE);
+        localBroadcastManager.sendBroadcast(intent);
+        //endregion
+    }
+
+
     public SharedPreferences getSharedPreferences() {
         return mSharedPreferences;
     }
