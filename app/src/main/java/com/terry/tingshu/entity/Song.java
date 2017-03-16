@@ -1,5 +1,6 @@
 package com.terry.tingshu.entity;
 
+import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -10,6 +11,16 @@ public class Song implements Parcelable {
     private float size;
     private boolean isDownloaded;
     private boolean isCached;
+
+    public Uri getPlayUri() {
+        return playUri;
+    }
+
+    public void setPlayUri(Uri playUri) {
+        this.playUri = playUri;
+    }
+
+    private Uri playUri;
 
     public int getLastPlayPosition() {
         return lastPlayPosition;

@@ -58,7 +58,7 @@ public class SongsInFolderDialog extends DialogFragmentBase {
             public void onItemClick(View view, int position) {
                 dismiss();
                 mApp.getGlobalSongManager().initByList(mSongList, position);
-                mApp.sendBroadcast_PLAY();
+                mApp.sendControlBroadcast_PLAY();
             }
         });
         songsView.setAdapter(adapter);

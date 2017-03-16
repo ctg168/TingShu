@@ -12,7 +12,6 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -75,21 +74,25 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser) {
-                    audioPlayService.getMusicPlayer().seekTo(progress);
+                    System.out.println("PlayerControllerFragment.onProgressChanged:" + progress + "/" + seekBar.getMax());
                 }
             }
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
+                System.out.println("PlayerControllerFragment.onStartTrackingTouch");
                 if (audioPlayService.getMusicPlayer().isPlaying()) {
-                    mApp.sendBroadcast_PAUSE();
+                    audioPlayService.getMusicPlayer().pause();
                 }
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
+                System.out.println("PlayerControllerFragment.onStopTrackingTouch");
                 if (!audioPlayService.getMusicPlayer().isPlaying()) {
-                    mApp.sendBroadcast_PLAY();
+                    audioPlayService.getMusicPlayer().start();
+                    audioPlayService.getMusicPlayer().seekTo(progressBar.getProgress());
+
                 }
             }
         });
@@ -119,12 +122,10 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
             public void onReceive(Context context, Intent intent) {
                 if (intent.getAction() != null && intent.getAction().equals(SystemConst.ACTION_MUSIC_SERVICE_INFO)) {
                     int control = intent.getIntExtra(SystemConst.EXTRA_KEY_PLAYER_INFO, -1);
-                    if (control == SystemConst.INFO_PLAYER_PLAYING) { //如果正在播放.
+                    if (control == SystemConst.INFO_PLAYER_PLAYING || control == SystemConst.INFO_PLAYER_PAUSE) { //如果是播放或暂停的消息.
                         int duration = audioPlayService.getMusicPlayer().getDuration();
-                        tvCurrentPosition.setText(stringForTime(0));
                         tvDuration.setText(stringForTime(duration));
                         progressBar.setMax(audioPlayService.getMusicPlayer().getDuration());
-                        progressBar.setProgress(0);
 
                         if (audioPlayService.getMusicPlayer().isPlaying()) {
                             btnPlayerPlay.setText(getString(R.string.player_pause));
@@ -133,26 +134,16 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
                             timer.schedule(new TimerTask() {
                                 @Override
                                 public void run() {
-
                                     myHandler.sendEmptyMessage(0);
                                 }
                             }, 0, 500);
 
                         } else {
                             btnPlayerPlay.setText(getString(R.string.player_play));
-                            timer.purge();
+                            if (timer != null)
+                                timer.purge();
                         }
-
-
-                    } else { //如果是暂停.
-                        System.out.println("PlayerControllerFragment.onReceive");
                     }
-
-//                    int pos = intent.getIntExtra(SystemConst.EXTRA_KEY_CURRENT_POSITION, -1);
-//                    if (pos >= 0) {
-//                        progressBar.setProgress(pos);
-//                        tvCurrentPosition.setText(stringForTime(pos));
-//                    }
                 }
 
             }
@@ -164,16 +155,16 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
         switch (v.getId()) {
             case R.id.btn_player_play:
                 if (audioPlayService.getMusicPlayer().isPlaying()) {
-                    mApp.sendBroadcast_PAUSE();
+                    mApp.sendControlBroadcast_PAUSE();
                 } else {
-                    mApp.sendBroadcast_PLAY();
+                    mApp.sendControlBroadcast_PLAY();
                 }
                 break;
             case R.id.btn_player_previous:
-                mApp.sendBroadcast_PREVIOUS();
+                mApp.sendControlBroadcast_PREVIOUS();
                 break;
             case R.id.btn_player_next:
-                mApp.sendBroadcast_NEXT();
+                mApp.sendControlBroadcast_NEXT();
                 break;
             case R.id.btn_player_list:
                 showPlayList();
@@ -210,7 +201,7 @@ public class PlayerControllerFragment extends FragmentBase implements View.OnCli
         }
     }
 
-    class MyHandler extends Handler {
+    private class MyHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);

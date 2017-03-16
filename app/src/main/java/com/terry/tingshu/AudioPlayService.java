@@ -135,8 +135,6 @@ public class AudioPlayService extends ServiceBase {
 
                 mPlayer.start();
                 mPlayer.seekTo(globalSongManager.getCurrent().getLastPlayPosition());
-
-
             }
         };
 
@@ -188,8 +186,7 @@ public class AudioPlayService extends ServiceBase {
             mPlayer.reset();
         }
         try {
-            Uri songUri = Uri.parse("file://" + song.getFilePath());
-            mPlayer.setDataSource(this, songUri);
+            mPlayer.setDataSource(this, song.getPlayUri());
             mPlayer.prepareAsync();
 
             if (isFirstRun) {
@@ -214,6 +211,7 @@ public class AudioPlayService extends ServiceBase {
             String lastUrl = globalSongManager.getCurrent().getFilePath();
             int lastPos = mPlayer.getCurrentPosition();
 
+            //TODO:暂停时，记下当前歌曲播放的位置.
             mApp.getSharedPreferences().edit().putString(SystemConst.KEY_LAST_SONG_URL, lastUrl).apply();
             mApp.getSharedPreferences().edit().putInt(SystemConst.KEY_LAST_SONG_POS, lastPos).apply();
         }
@@ -222,7 +220,13 @@ public class AudioPlayService extends ServiceBase {
     private void playerStart() {
         //启动播放有以下可能：继续播放，点击一首歌曲播放.统一由SongManager来控制.
         //preparePlayer(globalSongManager.getLastSavedSong());
-        preparePlayer(globalSongManager.getCurrent());
+        String lastUri = mApp.getSharedPreferences().getString(SystemConst.KEY_LAST_SONG_URL, "");
+        int currentPos = mApp.getSharedPreferences().getInt(SystemConst.KEY_LAST_SONG_POS, 0);
+        Song song = globalSongManager.getCurrent();
+        if (song.getFilePath().equals(lastUri)) {
+            song.setLastPlayPosition(currentPos);
+        }
+        preparePlayer(song);
     }
 
     private void playerPrevious() {

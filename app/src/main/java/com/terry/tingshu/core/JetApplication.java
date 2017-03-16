@@ -77,36 +77,29 @@ public class JetApplication extends Application {
 
     }
 
-    public void sendBroadcast_PLAY() {
+    public void sendControlBroadcast_PLAY() {
         Intent intent = new Intent(SystemConst.ACTION_PLAYER_CONTROL);
         intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROL, SystemConst.PLAYER_PLAY);
         localBroadcastManager.sendBroadcastSync(intent);
     }
 
-    public void sendBroadcast_PAUSE() {
+    public void sendControlBroadcast_PAUSE() {
         Intent intent = new Intent(SystemConst.ACTION_PLAYER_CONTROL);
         intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROL, SystemConst.PLAYER_PAUSE);
         localBroadcastManager.sendBroadcastSync(intent);
     }
 
-    public void sendBroadcast_NEXT() {
+    public void sendControlBroadcast_NEXT() {
         Intent intent = new Intent(SystemConst.ACTION_PLAYER_CONTROL);
         intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROL, SystemConst.PLAYER_NEXT);
         localBroadcastManager.sendBroadcastSync(intent);
     }
 
-    public void sendBroadcast_PREVIOUS() {
+    public void sendControlBroadcast_PREVIOUS() {
         Intent intent = new Intent(SystemConst.ACTION_PLAYER_CONTROL);
         intent.putExtra(SystemConst.EXTRA_KEY_PLAYER_CONTROL, SystemConst.PLAYER_PREVIOUS);
         localBroadcastManager.sendBroadcastSync(intent);
     }
-
-    public void sendBroadcast_CURRENT_POSITION() {
-        Intent intent = new Intent(SystemConst.ACTION_MUSIC_SERVICE_INFO);
-        intent.putExtra(SystemConst.EXTRA_KEY_CURRENT_POSITION, mService.getMusicPlayer().getCurrentPosition());
-        localBroadcastManager.sendBroadcast(intent);
-    }
-
 
     public SharedPreferences getSharedPreferences() {
         return mSharedPreferences;

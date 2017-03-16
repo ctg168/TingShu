@@ -1,5 +1,6 @@
 package com.terry.tingshu.helpers;
 
+import android.net.Uri;
 import android.support.annotation.Nullable;
 
 import com.terry.tingshu.entity.Song;
@@ -11,16 +12,18 @@ import java.util.List;
 public class SongHelper {
 
     /**
-     * Resolve a song from a mp3 file.
+     * Resolve a local song from a mp3 file.
+     *
      * @param file
      * @return
      */
     @Nullable
-    public static Song resolveSong(File file) {
+    public static Song resolveLocalSongFile(File file) {
         if (file.isFile() && file.getName().endsWith(".mp3")) {
             Song song = new Song();
             song.setCached(false);
             song.setFilePath(file.getPath());
+            song.setPlayUri(Uri.parse("file://" + file.getPath()));
             song.setDownloaded(true);
             song.setSize(file.length());
             return song;
@@ -40,7 +43,7 @@ public class SongHelper {
         File[] files = folder.listFiles();
 
         for (File file : files) {
-            Song song = resolveSong(file);
+            Song song = resolveLocalSongFile(file);
             if (song != null)
                 songList.add(song);
         }
